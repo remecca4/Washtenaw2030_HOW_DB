@@ -27,10 +27,10 @@
       -- Table to track any additions to facilities
      CREATE TABLE IF NOT EXISTS Additions (
      addition_id INTEGER PRIMARY KEY AUTOINCREMENT,
-     facility_id INTEGER NOT NULL,
+     congregation_id INTEGER NOT NULL,
      addition_size INTEGER, --size of the addition (sq ft.)
      addition_date DATETIME, --date addition was added
-     FOREIGN KEY (facility_id) REFERENCES facilities(facility_id)
+     FOREIGN KEY (congregation_id) REFERENCES congregations(congregation_id)
     
      );
   -- Table to record each congregation's solar potential
