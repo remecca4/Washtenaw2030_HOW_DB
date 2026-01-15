@@ -18,7 +18,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-only-key")
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-db.insert_user("remecca4@gmail.com",bcrypt.generate_password_hash("Chickenfeet1144#").decode("utf-8"),"admin",None)
+
 #user stuff
 class User(UserMixin):
     def __init__(self, row):
@@ -66,7 +66,7 @@ def admin_exists():
     return row is not None
 
 
-app.route("/bootstrap", methods=["GET", "POST"])
+@app.route("/bootstrap", methods=["GET", "POST"])
 def bootstrap():
     if admin_exists():
         return "Admin already exists", 403
@@ -444,4 +444,4 @@ def upload_climate_work_csv():
     flash("Climate Work CSV imported!")
     return redirect(request.referrer)
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
