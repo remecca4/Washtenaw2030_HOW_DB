@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}View Congregations{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h1 class="title">View Congregations</h1>
+
+    <!-- Dropdown -->
+    <form method="GET" action="/congregations" class="dropdown-form">
+        <label for="cong-select">Choose a congregation:</label>
+        <select id="cong-select" name="id" required>
+            <option value="">-- Select --</option>
+            {% for c in congregations %}
+                <option value="{{ c.congregation_id }}"
+                    {% if selected_congregation and c.congregation_id == selected_congregation.congregation_id %}
+                        selected
+                    {% endif %}
+                >{{ c.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">View</button>
+    </form>
+</div>
+
+
+{% if selected_congregation %}
+<div class="container details-container">
+
+    <!-- Congregation Header -->
+    <h2 class="section-title">{{ selected_congregation.name }}</h2>
+    
+    <div class="info-card">
+        <p><strong>Address:</strong> {{ selected_congregation.address }}</p>
+        <p><strong>Municipal Entity:</strong> {{ selected_congregation.municipal_entity }}</p>
+        <p><strong>Denomination:</strong> {{ selected_congregation.denomination }}</p>
+        <p><strong>Size:</strong> {{ selected_congregation.size }}</p>
+        <p><strong>Email:</strong> {{ selected_congregation.email }}</p>
+        <p><strong>Phone:</strong> {{ selected_congregation.phone_number }}</p>
+        {% if selected_congregation.website %}
+        <p><strong>Website:</strong> 
+            <a href="{{ selected_congregation.website }}" target="_blank">{{ selected_congregation.website }}</a>
+        </p>
+        {% endif %}
+    </div>
+     {% if current_user.is_authenticated  %}
+    <form method="GET" action="/edit_congregation/{{ selected_congregation.congregation_id }}" style="display:inline;">
+    <button type="submit" class="btn btn-danger">Edit</button>
+</form>
+    <form method="POST" action="/delete_congregation/{{ selected_congregation.congregation_id }}" style="display:inline;">
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this congregation?')">Delete</button>
+    </form>
+    {% endif %}
+    <!-- Facilities -->
+<h3 class="section-title">Facilities</h3>
+{% if facilities %}
+    <div class="list-block">
+        {% for f in facilities %}
+        <div class="entry-block">
+            <div class="mini-card">
+                <p><strong>Size:</strong> {{ f.facility_size }} sq ft</p>
+                <p><strong>Age:</strong> {{ f.age }} years</p>
+                <p><strong>Heating:</strong> {{ f.heating_sys }}</p>
+                <p><strong>Ventilation:</strong> {{ f.vent_sys }}</p>
+                <p><strong>AC:</strong> {{ f.ac_sys }}</p>
+                <p><strong>Estimated Bill:</strong> ${{ f.est_electric_bill }}</p>
+            </div>
+            {% if current_user.is_authenticated %}
+            <div class="button-row">
+                <form method="GET" action="/edit_facility/{{ f.facility_id }}">
+                    <button type="submit" class="btn btn-danger">Edit</button>
+                </form>
+                <form method="POST" action="/delete_facility/{{ f.facility_id }}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this facility?')">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-text">No facilities recorded.</p>
+{% endif %}
+
+
+<!-- Building Additions -->
+<h3 class="section-title">Building Additions</h3>
+{% if additions %}
+    <div class="list-block">
+        {% for a in additions %}
+        <div class="entry-block">
+            <div class="mini-card">
+                <p><strong>Size:</strong> {{ a.addition_size }} sq ft</p>
+                <p><strong>Date:</strong> {{ a.addition_date }}</p>
+            </div>
+             {% if current_user.is_authenticated %}
+            <div class="button-row">
+                <form method="GET" action="/edit_addition/{{ a.addition_id }}">
+                    <button type="submit" class="btn btn-danger">Edit</button>
+                </form>
+                <form method="POST" action="/delete_addition/{{ a.addition_id }}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this addition?')">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-text">No additions recorded.</p>
+{% endif %}
+
+
+<!-- Solar Potential -->
+<h3 class="section-title">Solar Potential</h3>
+{% if solar %}
+    <div class="list-block">
+        {% for s in solar %}
+        <div class="entry-block">
+            <div class="mini-card">
+                <p><strong>Usable Sunlight:</strong> {{ s.usable_sunlight }}</p>
+                <p><strong>Panel Space:</strong> {{ s.solar_panel_space }} sq ft</p>
+                <p><strong>Savings:</strong> ${{ s.savings }}/year</p>
+                <p><strong>CO₂ Savings:</strong> {{ s.co2_savings }} metric tons/year</p>
+            </div>
+            {% if current_user.is_authenticated %}
+            <div class="button-row">
+                <form method="GET" action="/edit_solar/{{ s.solar_pot_id }}">
+                    <button type="submit" class="btn btn-danger">Edit</button>
+                </form>
+                <form method="POST" action="/delete_solar/{{ s.solar_pot_id }}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this solar potential?')">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-text">No solar data recorded.</p>
+{% endif %}
+
+
+<!-- Climate Work -->
+<h3 class="section-title">Climate Work</h3>
+{% if climate_work %}
+    <div class="list-block">
+        {% for w in climate_work %}
+        <div class="entry-block">
+            <div class="mini-card">
+                <p><strong>Type:</strong> {{ w.work_type }}</p>
+                <p><strong>Period:</strong> {{ w.start_date }} → {{ w.end_date }}</p>
+                <p><strong>Description:</strong> {{ w.description }}</p>
+                <p><strong>Impact:</strong> {{ w.impact }}</p>
+            </div>
+            {% if current_user.is_authenticated %}
+            <div class="button-row">
+                <form method="GET" action="/edit_climate_work/{{ w.climate_work_id }}">
+                    <button type="submit" class="btn btn-danger">Edit</button>
+                </form>
+                <form method="POST" action="/delete_climate_work/{{ w.climate_work_id }}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this climate work?')">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-text">No climate work recorded.</p>
+{% endif %}
+
+</div>
+{% endif %}
+
+
+<!--styles -->
+<style>
+    .container {
+        max-width: 750px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #f5fff7;
+        border-radius: 18px;
+        border: 2px solid rgba(50, 120, 50, 0.2);
+        box-shadow: 0 0 15px rgba(90, 140, 90, 0.15);
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        color: #2e5f3e;
+        margin-top: 20px;
+        text-shadow: 1px 1px 2px #cfeccc;
+    }
+
+    .info-card {
+        background: #ffffff;
+        padding: 15px 20px;
+        border-radius: 12px;
+        border: 1px solid #d9f2dd;
+        box-shadow: 0 0 8px rgba(80, 120, 80, 0.12);
+        margin-bottom: 15px;
+    }
+    
+    .mini-card {
+    padding: 5px 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+    .list-block {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .empty-text {
+        color: #5f7b63;
+        font-style: italic;
+    }
+
+    .dropdown-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    select, button {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #b6d8b9;
+    }
+
+    button {
+        background: #e4ffe8;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #d6f5db;
+        transform: translateY(-2px);
+    }
+    .entry-block {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #d9f2dd;
+    box-shadow: 0 0 8px rgba(80, 120, 80, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+   .button-row {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+   }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+</style>
+
+{% endblock %}

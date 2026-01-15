@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+
+{% block title %}Forms{% endblock %}
+
+{% block content %}
+
+<h1>Add Data</h1>
+
+<style>
+    .form-box {
+        margin-bottom: 60px;
+        padding: 25px 30px;
+        border: 2px solid var(--leaf-mid);
+        background: var(--leaf-light);
+        border-radius: 14px;
+    }
+
+    .form-box h2 {
+        margin-bottom: 18px;
+        font-size: 1.6rem;
+        color: var(--forest);
+    }
+
+    .form-section {
+        margin-bottom: 28px; 
+        padding-bottom: 15px;
+        border-bottom: 1px dashed var(--leaf-dark);
+    }
+
+    label {
+        display: block;
+        margin-bottom: 16px;
+        font-weight: 600;
+        color: var(--forest);
+    }
+
+    input, select {
+        padding: 10px;
+        width: 100%;
+        max-width: 350px;
+        margin-top: 6px;
+        border: 1.5px solid var(--leaf-dark);
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .csv-upload-box {
+        background: #fff;
+        padding: 14px;
+        border: 1.5px solid var(--leaf-dark);
+        border-radius: 10px;
+        margin-bottom: 22px;
+    }
+
+    button {
+        margin-top: 10px;
+        padding: 10px 18px;
+        background: var(--forest);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: var(--leaf-dark);
+    }
+</style>
+{% if current_user.is_authenticated %}
+<div class="form-box">
+<h2>Add Congregations</h2>
+
+{% with upload_url=upload_congregations_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/congregation/add" method="POST">
+    <label>Name <input type="text" name="name" required></label>
+    <label>Address <input type="text" name="address"></label>
+    <label>Municipal Entity <input type="text" name="municipal_entity"></label>
+    <label>Denomination <input type="text" name="denomination"></label>
+    <label>Size (sq ft) <input type="number" name="size"></label>
+    <label>Email <input type="email" name="email"></label>
+    <label>Phone Number <input type="text" name="phone_number"></label>
+    <label>Website <input type="url" name="website"></label>
+    <button type="submit">Add Congregation</button>
+</form>
+
+</div>
+{% endif %}
+<div class="form-box">
+<h2>Add Facility</h2>
+{% with upload_url=upload_facilities_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/facility/add" method="POST">
+    <label>Congregation
+        <select name="congregation_id" required>
+            <option value="">-- Select Congregation --</option>
+            {% for cong in congregations %}
+                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Facility Size (sq ft) <input type="number" name="facility_size"></label>
+    <label>Age <input type="number" name="age"></label>
+    <label>Heating System <input type="text" name="heating_sys"></label>
+    <label>Ventilation System <input type="text" name="vent_sys"></label>
+    <label>AC System <input type="text" name="ac_sys"></label>
+    <button type="submit">Save Facility</button>
+</form>
+
+</div>
+
+<div class="form-box">
+<h2>Add Addition</h2>
+{% with upload_url=upload_additions_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/addition/add" method="POST">
+    <label>Congregation
+        <select name="congregation_id" required>
+            <option value="">-- Select Congregation --</option>
+            {% for cong in congregations %}
+                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Addition Size (sq ft) <input type="number" name="addition_size"></label>
+    <label>Addition Date <input type="date" name="addition_date"></label>
+    <button type="submit">Save Addition</button>
+</form>
+</div>
+
+<div class="form-box">
+<h2>Add Solar Potential</h2>
+{% with upload_url=upload_solar_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/solar/add" method="POST">
+    <label>Congregation
+        <select name="congregation_id" required>
+            {% for cong in congregations %}
+                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Usable Sunlight (hours/year) <input type="number" name="usable_sunlight"></label>
+    <label>Solar Panel Space <input type="number" name="solar_panel_space"></label>
+    <label>Savings ($) <input type="number" name="savings"></label>
+    <label>CO₂ Savings <input type="number" name="co2_savings"></label>
+    <button type="submit">Save Solar Potential</button>
+</form>
+</div>
+
+<div class="form-box">
+<h2>Add Climate Work</h2>
+{% with upload_url=upload_climate_work_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/climate_work/add" method="POST">
+    <label>Congregation
+        <select name="congregation_id" required>
+            {% for cong in congregations %}
+                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Work Type <input type="text" name="work_type"></label>
+    <label>Start Date <input type="date" name="start_date"></label>
+    <label>End Date <input type="date" name="end_date"></label>
+    <label>Description <input type="text" name="description"></label>
+    <label>Impact <input type="text" name="impact"></label>
+    <button type="submit">Save Climate Work</button>
+</form>
+</div>
+
+{% endblock %}
