@@ -27,6 +27,7 @@ class User(UserMixin):
         self.password_hash = row[2]
         self.role = row[3]
         self.congregation_id = row[4]
+        self.approved = row[5] 
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -40,11 +41,20 @@ def login():
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
-        row = db.get_user_by_email(email)
-        row = db.get_user_by_email(email)
+        print(email)
+        user_id=db.get_user_id(email)
+        print(user_id)
+        row = db.get_user_by_id(user_id)
+        print(row)
+        #print(row[2])
         if row and bcrypt.check_password_hash(row[2], password):
-          login_user(User(row))
-          return redirect(url_for("home"))
+         
+
+         if row[5] == 0:
+          flash("Your account is awaiting admin approval.")
+          return redirect("/login")
+         login_user(User(row))
+         return redirect("/")
         flash("Invalid credentials")
     return render_template("login.html")
 
@@ -53,6 +63,31 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+        print(password_hash)
+        # Create user as pending
+        db.insert_user(
+            email=email,
+            password_hash=password_hash,
+            role="user",
+            congregation_id=None,
+            approved=0  # pending
+        )
+
+        flash("Signup request submitted. Awaiting admin approval.")
+        return redirect("/login")
+
+    return render_template("signup.html")
+
+
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -66,7 +101,26 @@ def admin_exists():
     return row is not None
 
 
-@app.route("/bootstrap", methods=["GET", "POST"])
+
+@app.route("/admin/manage-users/approve/<email>")
+@login_required
+@admin_required
+def approve_user(email):
+    
+    user_id=db.get_user_id(email)
+    db.approve_user(user_id)
+    flash(f"{email} approved!")
+    return redirect("/admin//manage-users")
+
+@app.route("/admin/manage-users/reject/<email>")
+@login_required
+@admin_required
+def reject_user(email):
+    user_id=db.get_user_id(email)
+    db.delete_User(user_id)
+    flash(f"{email} rejected.")
+    return redirect("/admin/manage-users")
+
 def bootstrap():
     if admin_exists():
         return "Admin already exists", 403
@@ -82,12 +136,14 @@ def bootstrap():
 
     return render_template("bootstrap.html")
 
-# so navigation works
+
+@app.route("/admin/manage-users")
 @login_required
 @admin_required
-@app.route("/admin/manage-users", methods=["GET"])
 def manage_users():
-    return render_template("manage_users.html")
+    users = db.fetchall("SELECT email FROM Users WHERE approved = 0 AND role = 'user'")
+    print("PENDING USERS:", users)
+    return render_template("manage_users.html", users=users)
 @app.route("/admin/manage-users/create-user", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -444,4 +500,4 @@ def upload_climate_work_csv():
     flash("Climate Work CSV imported!")
     return redirect(request.referrer)
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

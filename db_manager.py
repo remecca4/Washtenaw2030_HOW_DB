@@ -281,7 +281,7 @@ class DatabaseManager:
         
         return cursor.lastrowid
     
-    def insert_user(self, email, password_hash, role,congregation_id):
+    def insert_user(self, email, password_hash, role,congregation_id,approved):
         '''
         Inserts climate work into the climate work table
         ------------------------------------------------------------
@@ -304,9 +304,9 @@ class DatabaseManager:
         
         try:
             cursor.execute("""
-            INSERT INTO Users (email, password_hash, role,congregation_id)
-            VALUES (?,?,?,?);
-        """, (email, password_hash, role,congregation_id))
+            INSERT INTO Users (email, password_hash, role,congregation_id,approved)
+            VALUES (?,?,?,?,?);
+        """, (email, password_hash, role,congregation_id,approved))
             connection.commit()
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
@@ -737,10 +737,13 @@ class DatabaseManager:
         )
 
     def get_user_by_id(self, user_id):
-        return self.fetchone(
+        row=self.fetchone(
             "SELECT * FROM Users WHERE id = ?",
             (user_id,)
         )
+        print("DEBUG ROW:", row)
+        return row
+    
     def get_user_id(self,email):
       connection = sqlite3.connect(self.db_path)
       cursor = connection.cursor()
@@ -757,7 +760,18 @@ class DatabaseManager:
       except sqlite3.Error as e:
         print(f"An error occurred: {e}")
         return None
-       
+    
+    def get_admin_emails(self):
+      rows = self.fetchall("SELECT email FROM Users WHERE role = 'admin'")
+      return [r["email"] for r in rows]  
+    
+    def approve_user(self, user_id):
+      conn = sqlite3.connect(self.db_path)
+      cur = conn.cursor()
+      cur.execute("UPDATE Users SET approved = 1 WHERE id = ?", (user_id,))
+      conn.commit()
+      conn.close()
+    
     def close(self):
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
@@ -769,5 +783,13 @@ class DatabaseManager:
      cur = conn.cursor()
      cur.execute(query, params)
      row = cur.fetchone()
+     return row
+     conn.close()
+    
+    def fetchall(self, query, params=()):
+     conn = sqlite3.connect(self.db_path)
+     cur = conn.cursor()
+     cur.execute(query, params)
+     row = cur.fetchall()
      conn.close()
      return row

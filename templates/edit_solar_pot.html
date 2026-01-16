@@ -37,89 +37,12 @@
         
 
         <div class="button-group">
-            <button type="submit" class="save-btn">Save Changes</button>
-            <a href="/congregations?id={{ solar_pot['congregation_id'] }}" class="cancel-btn">Cancel</a>
+            <button type="submit" class="button">Save Changes</button>
+            <a href="/congregations?id={{ solar_pot['congregation_id'] }}" class="button button-reject">Cancel</a>
         </div>
 
     </form>
 </div>
 
-<style>
-.container {
-    max-width: 650px;
-    margin: 40px auto;
-    padding: 30px;
-    background: #f5fff7;
-    border-radius: 18px;
-    border: 2px solid rgba(50, 120, 50, 0.2);
-    box-shadow: 0 0 15px rgba(90, 140, 90, 0.15);
-}
 
-.title {
-    font-family: "Georgia", serif;
-    font-size: 2.2rem;
-    color: #2e5f3e;
-    text-align: center;
-    margin-bottom: 20px;
-    text-shadow: 1px 1px 2px #cfeccc;
-}
-
-.edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.edit-form label {
-    font-weight: bold;
-    color: #3a6a47;
-}
-
-.edit-form input {
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid #b6d8b9;
-}
-
-/* Save button */
-.save-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    background: #e4ffe8;
-    border: 1px solid #b6d8b9;
-    color: #2e5f3e;
-    cursor: pointer;
-    line-height: 28px;
-    transition: 0.2s;
-}
-
-.save-btn:hover {
-    background: #d6f5db;
-    transform: translateY(-1px);
-}
-
-/* Cancel button  */
-.cancel-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    background: #fbeaea;
-    border: 1px solid #f5c2c2;
-    color: #a33;
-    line-height: 28px;
-    transition: 0.2s;
-}
-
-.cancel-btn:hover {
-    background: #f6caca;
-    transform: translateY(-1px);
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-</style>
 {% endblock %}

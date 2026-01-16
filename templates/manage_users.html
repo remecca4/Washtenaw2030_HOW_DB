@@ -18,7 +18,7 @@
         <option value="admin">Admin</option>
     </select>
 
-    <button type="submit">Create</button>
+    <button class="button" type="submit">Create</button>
 </form>
 
 
@@ -29,6 +29,92 @@
     <label>Email</label>
     <input type="email" name="email" required>
 
-    <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this user?')">Remove</button>
+    <button type="submit" class="button" onclick="return confirm('Remove this user?')">Remove</button>
 </form>
+
+<h2>Pending User Approvals</h2>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if users %}
+
+    <table>
+        <tr>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+
+        {% for user in users %}
+        <tr>
+            <td>{{ user[0] }}</td>
+            <td>
+         <div class="action-buttons">
+        <a class="btn" href="/admin/manage-users/approve/{{ user[0] }}">Approve</a>
+        <a class="btn btn-reject" 
+           href="/admin/manage-users/reject/{{ user[0] }}"
+           onclick="return confirm('Reject this user?')">
+           Reject
+        </a>
+    </div>
+</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% else %}
+
+    <div class="empty">
+        No pending users. 
+    </div>
+
+    {% endif %}
+<style>
+    .btn {
+    margin-right: 8px;
+    margin-top: 5px;
+    
+    padding: 5px 6px;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    border: 0.5px solid var(--leaf-dark);
+    background: var(--forest);
+    color: white;
+    transition: 0.2s;
+}
+
+.btn:hover {
+    background: var(--green-hover);
+    transform: translateY(-1px);
+}
+
+
+/* Red reject / cancel */
+.btn-reject {
+    background: var(--red-cancel);
+    color: white;
+    border: 0.5px solid #f5c2c2;
+    margin-top: 5px;
+    padding: 5px 6px;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-reject:hover {
+    background: var(--red-hover);
+}
+.action-buttons {
+    display: flex;
+    gap: 8px;   /* spacing between buttons */
+    flex-wrap: wrap; /* prevents overlap on small screens */
+}
+</style>
 {% endblock %}

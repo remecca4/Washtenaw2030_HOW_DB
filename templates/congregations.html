@@ -20,7 +20,7 @@
             {% endfor %}
         </select>
 
-        <button type="submit">View</button>
+        <button class="button", type="submit">View</button>
     </form>
 </div>
 
@@ -46,10 +46,10 @@
     </div>
      {% if current_user.is_authenticated  %}
     <form method="GET" action="/edit_congregation/{{ selected_congregation.congregation_id }}" style="display:inline;">
-    <button type="submit" class="btn btn-danger">Edit</button>
+    <button type="submit" class="button">Edit</button>
 </form>
     <form method="POST" action="/delete_congregation/{{ selected_congregation.congregation_id }}" style="display:inline;">
-    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this congregation?')">Delete</button>
+    <button type="submit" class="button" onclick="return confirm('Delete this congregation?')">Delete</button>
     </form>
     {% endif %}
     <!-- Facilities -->
@@ -69,10 +69,10 @@
             {% if current_user.is_authenticated %}
             <div class="button-row">
                 <form method="GET" action="/edit_facility/{{ f.facility_id }}">
-                    <button type="submit" class="btn btn-danger">Edit</button>
+                    <button class="button" type="submit">Edit</button>
                 </form>
                 <form method="POST" action="/delete_facility/{{ f.facility_id }}">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this facility?')">Delete</button>
+                    <button type="submit" class="button" onclick="return confirm('Delete this facility?')">Delete</button>
                 </form>
             </div>
             {% endif %}
@@ -97,10 +97,10 @@
              {% if current_user.is_authenticated %}
             <div class="button-row">
                 <form method="GET" action="/edit_addition/{{ a.addition_id }}">
-                    <button type="submit" class="btn btn-danger">Edit</button>
+                    <button type="submit" class="button">Edit</button>
                 </form>
                 <form method="POST" action="/delete_addition/{{ a.addition_id }}">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this addition?')">Delete</button>
+                    <button type="submit" class="button" onclick="return confirm('Delete this addition?')">Delete</button>
                 </form>
             </div>
             {% endif %}
@@ -127,10 +127,10 @@
             {% if current_user.is_authenticated %}
             <div class="button-row">
                 <form method="GET" action="/edit_solar/{{ s.solar_pot_id }}">
-                    <button type="submit" class="btn btn-danger">Edit</button>
+                    <button type="submit" class="button">Edit</button>
                 </form>
                 <form method="POST" action="/delete_solar/{{ s.solar_pot_id }}">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this solar potential?')">Delete</button>
+                    <button type="submit" class="button" onclick="return confirm('Delete this solar potential?')">Delete</button>
                 </form>
             </div>
             {% endif %}
@@ -157,10 +157,10 @@
             {% if current_user.is_authenticated %}
             <div class="button-row">
                 <form method="GET" action="/edit_climate_work/{{ w.climate_work_id }}">
-                    <button type="submit" class="btn btn-danger">Edit</button>
+                    <button type="submit" class="button">Edit</button>
                 </form>
                 <form method="POST" action="/delete_climate_work/{{ w.climate_work_id }}">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this climate work?')">Delete</button>
+                    <button type="submit" class="button" onclick="return confirm('Delete this climate work?')">Delete</button>
                 </form>
             </div>
             {% endif %}
@@ -174,100 +174,5 @@
 </div>
 {% endif %}
 
-
-<!--styles -->
-<style>
-    .container {
-        max-width: 750px;
-        margin: 40px auto;
-        padding: 30px;
-        background: #f5fff7;
-        border-radius: 18px;
-        border: 2px solid rgba(50, 120, 50, 0.2);
-        box-shadow: 0 0 15px rgba(90, 140, 90, 0.15);
-        animation: fadeIn 0.8s ease-out;
-    }
-
-    .section-title {
-        font-size: 1.8rem;
-        color: #2e5f3e;
-        margin-top: 20px;
-        text-shadow: 1px 1px 2px #cfeccc;
-    }
-
-    .info-card {
-        background: #ffffff;
-        padding: 15px 20px;
-        border-radius: 12px;
-        border: 1px solid #d9f2dd;
-        box-shadow: 0 0 8px rgba(80, 120, 80, 0.12);
-        margin-bottom: 15px;
-    }
-    
-    .mini-card {
-    padding: 5px 0;
-    border: none;
-    box-shadow: none;
-    background: transparent;
-    margin-bottom: 0;
-    width: 100%;
-}
-
-    .list-block {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-
-    .empty-text {
-        color: #5f7b63;
-        font-style: italic;
-    }
-
-    .dropdown-form {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        justify-content: center;
-    }
-
-    select, button {
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #b6d8b9;
-    }
-
-    button {
-        background: #e4ffe8;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-
-    button:hover {
-        background: #d6f5db;
-        transform: translateY(-2px);
-    }
-    .entry-block {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #d9f2dd;
-    box-shadow: 0 0 8px rgba(80, 120, 80, 0.12);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-   .button-row {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-   }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-</style>
 
 {% endblock %}
