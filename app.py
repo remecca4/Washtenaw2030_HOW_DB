@@ -439,7 +439,7 @@ def delete_climate_work(climate_work_id):
 
 
 
-UPLOAD_FOLDER = "tmp"
+UPLOAD_FOLDER = "/tmp"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.post("/upload/congregations")
