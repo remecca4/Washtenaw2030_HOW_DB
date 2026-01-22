@@ -1,5 +1,5 @@
 from datetime import datetime as datetime
-import sqlite3
+import threading
 from flask import Flask, render_template, request, redirect, url_for,Blueprint, flash, abort
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
@@ -446,16 +446,23 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @login_required
 def upload_congregations_csv():
     file = request.files.get("csv_file")
-    if not file:
+    if not file or file.filename == "":
         flash("No file uploaded.")
         return redirect(request.referrer)
 
-    path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
     file.save(path)
 
-    parse_insert_congregation_csv(path)
+    # Run heavy work OUTSIDE the request
+    threading.Thread(
+        target=parse_insert_congregation_csv,
+        args=(path,),
+        daemon=True
+    ).start()
 
-    flash("Congregations CSV imported!")
+    flash("Congregations CSV Imported!.")
     return redirect(request.referrer)
 
 
@@ -463,9 +470,22 @@ def upload_congregations_csv():
 @login_required
 def upload_facilities_csv():
     file = request.files.get("csv_file")
-    path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+    if not file or file.filename == "":
+        flash("No file uploaded.")
+        return redirect(request.referrer)
+
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
     file.save(path)
-    parse_insert_facilities_csv(path)
+
+    # Run heavy work OUTSIDE the request
+    threading.Thread(
+        target=parse_insert_facilities_csv,
+        args=(path,),
+        daemon=True
+    ).start()
+    
     flash("Facilities CSV imported!")
     return redirect(request.referrer)
 
@@ -473,9 +493,22 @@ def upload_facilities_csv():
 @login_required
 def upload_additions_csv():
     file = request.files.get("csv_file")
-    path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+    if not file or file.filename == "":
+        flash("No file uploaded.")
+        return redirect(request.referrer)
+
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
     file.save(path)
-    parse_insert_additions_csv(path)
+
+    # Run heavy work OUTSIDE the request
+    threading.Thread(
+        target=parse_insert_additions_csv,
+        args=(path,),
+        daemon=True
+    ).start()
+    
     flash("Additions CSV imported!")
     return redirect(request.referrer)
 
@@ -484,9 +517,22 @@ def upload_additions_csv():
 
 def upload_solar_csv():
     file = request.files.get("csv_file")
-    path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+    if not file or file.filename == "":
+        flash("No file uploaded.")
+        return redirect(request.referrer)
+
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
     file.save(path)
-    parse_insert_solar_csv(path)
+
+    # Run heavy work OUTSIDE the request
+    threading.Thread(
+        target=parse_insert_solar_csv,
+        args=(path,),
+        daemon=True
+    ).start()
+    
     flash("Solar potential CSV imported!")
     return redirect(request.referrer)
 
@@ -494,10 +540,22 @@ def upload_solar_csv():
 @login_required
 def upload_climate_work_csv():
     file = request.files.get("csv_file")
-    path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+    if not file or file.filename == "":
+        flash("No file uploaded.")
+        return redirect(request.referrer)
+
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
     file.save(path)
-    parse_insert_climate_work_csv(path)
+
+    # Run heavy work OUTSIDE the request
+    threading.Thread(
+        target=parse_insert_climate_work_csv,
+        args=(path,),
+        daemon=True
+    ).start()
     flash("Climate Work CSV imported!")
     return redirect(request.referrer)
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
