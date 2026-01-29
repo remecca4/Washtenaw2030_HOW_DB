@@ -1,8 +1,9 @@
-import sqlite3
+import psycopg2
+import os
 
 
 class DatabaseManager:
-    def __init__(self, db_path='how_db.db'):
+    def __init__(self):
         '''
          Database Manager Constructor
          -------------------------------------
@@ -10,15 +11,8 @@ class DatabaseManager:
          ------------------------------------
          db_path: string, path to database
         '''
-        self.db_path = db_path
+        
         self._setup_database()
-        
-        
-    def get_connection(self):
-         conn = sqlite3.connect(self.db_path)
-         conn.execute("PRAGMA foreign_keys = ON;")
-         conn.row_factory = sqlite3.Row
-         return conn
         
     def _setup_database(self):
         '''
@@ -27,9 +21,14 @@ class DatabaseManager:
          executes script to set up HOW database
         '''
         schema_script = """
+    
+        """
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
+        cong_table_script="""
         -- Table to store basic info about houses of worship
-        CREATE TABLE IF NOT EXISTS Congregations (
-        congregation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CREATE TABLE IF NOT EXISTS congregations (
+        congregation_id SERIAL PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
         address TEXT NOT NULL,
         municipal_entity TEXT, -- eg. Ann Arbor, Chelsea, etc.
@@ -38,89 +37,76 @@ class DatabaseManager:
         email TEXT,  
         phone_number TEXT,
         website TEXT
-       );
-
-      
-     -- Table to keep track of facility info
-     CREATE TABLE IF NOT EXISTS Facilities (
-     facility_id INTEGER PRIMARY KEY AUTOINCREMENT,
-     congregation_id INTEGER NOT NULL,
-     facility_size INTEGER, --size of the facility (sq ft.)
-     age INTEGER, --age of building
-     heating_sys TEXT, --heating system type
-     vent_sys  TEXT, --ventilation system type
-     ac_sys TEXT,  --ac system type
-     est_electric_bill FLOAT,  --estimated electric bill
-     FOREIGN KEY (congregation_id) REFERENCES congregations(congregation_id)
-      ON DELETE CASCADE
-    
-     );
-      -- Table to track any additions to facilities
-     CREATE TABLE IF NOT EXISTS Additions (
-     addition_id INTEGER PRIMARY KEY AUTOINCREMENT,
-     congregation_id INTEGER NOT NULL,
-     addition_size INTEGER, --size of the addition (sq ft.)
-     addition_date DATETIME, --date addition was added
-     FOREIGN KEY (congregation_id) REFERENCES congregations(congregation_id)
-      ON DELETE CASCADE
-    
-     );
-  -- Table to record each congregation's solar potential
-     CREATE TABLE IF NOT EXISTS Solar_potential (
-     solar_pot_id INTEGER PRIMARY KEY AUTOINCREMENT,
-     congregation_id INTEGER NOT NULL,
-     usable_sunlight INTEGER, --est amount of usable sunlight per year in hours
-     solar_panel_space INTEGER, --amount of space for solar panels (sq ft.)
-     savings INTEGER, --estimated amount of monetary savings per year from installing solar panels(dollars)
-     co2_savings INTEGER, --estimated CO2 savings per year from installing solar panels(metric tons)
-     FOREIGN KEY (congregation_id) REFERENCES congregations(congregation_id)
-      ON DELETE CASCADE
-    
-     );
-     -- Tracks any climate work each congregation has done
-     CREATE TABLE IF NOT EXISTS Climate_work(
-     climate_work_id INTEGER PRIMARY KEY AUTOINCREMENT,
-     congregation_id INTEGER NOT NULL,
-     work_type TEXT NOT NULL, --category of climate work
-     start_date DATETIME, --start date of work
-     end_date DATETIME, --end date of work (leave blank if still ongoing)
-     description  TEXT, --description of work
-     impact TEXT,  --add any impacts here
-     FOREIGN KEY (congregation_id) REFERENCES congregations(congregation_id)
-      ON DELETE CASCADE
-    
-     );
-    CREATE TABLE IF NOT EXISTS Users (
-     id INTEGER PRIMARY KEY AUTOINCREMENT,
-     email TEXT UNIQUE NOT NULL,
-     password_hash TEXT NOT NULL,
-     role TEXT NOT NULL,
-     congregation_id INTEGER,
-     FOREIGN KEY (congregation_id) REFERENCES Congregations(congregation_id)
-     ON DELETE CASCADE
-);
+       );"""
+        cursor.execute(cong_table_script)
+        facility_table_script="""
+         -- Table to keep track of facility info
+         CREATE TABLE IF NOT EXISTS  facilities  (
+         facility_id SERIAL PRIMARY KEY,
+         congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+         facility_size INTEGER, --size of the facility (sq ft.)
+         age INTEGER, --age of building
+         heating_sys TEXT, --heating system type
+         vent_sys  TEXT, --ventilation system type
+         ac_sys TEXT,  --ac system type
+         est_electric_bill DOUBLE PRECISION  --estimated electric bill   
+          );"""
+        cursor.execute(facility_table_script)
+        additions_table_script="""
+         -- Table to track any additions to facilities
+         CREATE TABLE IF NOT EXISTS additions (
+         addition_id SERIAL PRIMARY KEY,
+         congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+         addition_size INTEGER, --size of the addition (sq ft.)
+         addition_date TIMESTAMP --date addition was added 
+         );
+          """
+        cursor.execute(additions_table_script)
+        solar_table_script="""-- Table to record each congregation's solar potential
+         CREATE TABLE IF NOT EXISTS solar_potential (
+        solar_pot_id SERIAL PRIMARY KEY,
+        congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+        usable_sunlight INTEGER, --est amount of usable sunlight per year in hours
+        solar_panel_space INTEGER, --amount of space for solar panels (sq ft.)
+        savings INTEGER, --estimated amount of monetary savings per year from installing solar panels(dollars)
+        co2_savings INTEGER --estimated CO2 savings per year from installing solar panels(metric tons) 
+        );"""
+        cursor.execute(solar_table_script)
+        climate_table_script="""
+          -- Tracks any climate work each congregation has done
+         CREATE TABLE IF NOT EXISTS climate_work(
+        climate_work_id SERIAL PRIMARY KEY,
+        congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+        work_type TEXT NOT NULL, --category of climate work
+        start_date TIMESTAMP, --start date of work
+       end_date TIMESTAMP, --end date of work (leave blank if still ongoing)
+       description  TEXT, --description of work
+       impact TEXT  --add any impacts here 
+       );"""
+        cursor.execute(climate_table_script)
+        users_table_script="""
+        CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL,
+        congregation_id INTEGER REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+        approved BOOLEAN NOT NULL DEFAULT FALSE
+        );
         """
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-        cursor.executescript(schema_script)
-        connection.commit()
+        cursor.execute(users_table_script)
+        conn.commit()
 
     def clear_tables(self):
         '''
         clears all tables in database
         '''
-        truncate_script = """
-        DELETE FROM Congregations;
-        DELETE FROM Facilities;
-        DELETE FROM Additions;
-        DELETE FROM Solar_potential;
-        DELETE FROM Climate_work;
-        """
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-        cursor.executescript(truncate_script)
-        connection.commit()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM congregations;")
+        conn.commit()
         print("CLEAR TABLES")
+        conn.close()
 
     def insert_congregation(self, name,address, municipal_entity, denomination, size, email,phone_number,website):
         '''
@@ -141,20 +127,20 @@ class DatabaseManager:
         --------------------------------------------------
         int, last row id
         '''
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
        
         try:
             cursor.execute("""
-            INSERT INTO Congregations (name, address,municipal_entity, denomination, size, email,phone_number,website)
-            VALUES (?, ?, ?,?, ?, ?,?,?);
+            INSERT INTO congregations (name, address,municipal_entity, denomination, size, email,phone_number,website)
+            VALUES (%s, %s, %s,%s, %s, %s,%s,%s);
         """, (name, address,municipal_entity, denomination, size, email,phone_number,website))
-            connection.commit()
-        except sqlite3.Error as e:
+            conn.commit()
+        except psycopg2.Error as e:
             print(f"An error occurred: {e}")
-
+        conn.close()
         
-        return cursor.lastrowid
+       
 
     def insert_facility(self, congregation_id,facility_size, age,heating_sys, vent_sys, ac_sys):
         '''
@@ -162,7 +148,7 @@ class DatabaseManager:
         ------------------------------------------------------------
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from Congregations table
+        congregation_id: int, id of congregation from congregations table
         facility_size: int, size of facility in square feet
         age: int, age of facility in years
         heating_sys: string, type of heating system the facility uses
@@ -174,17 +160,18 @@ class DatabaseManager:
         int, last row id
         '''
         
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         
         try:
             cursor.execute("""
-            INSERT INTO Facilities (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,est_electric_bill)
-            VALUES (?,?,?,?,?,?,?);
+            INSERT INTO facilities (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,est_electric_bill)
+            VALUES (%s,%s,%s,%s,%s,%s,%s);
         """, (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,1.38*facility_size))
-            connection.commit()
-        except sqlite3.Error as e:
+            conn.commit()
+        except psycopg2.Error as e:
             print(f"An error occurred: {e}")
+        conn.close()
     
     def insert_addition(self, congregation_id,addition_size, addition_date):
         '''
@@ -192,7 +179,7 @@ class DatabaseManager:
         ------------------------------------------------------------
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from Congregations table
+        congregation_id: int, id of congregation from congregations table
         addition_size: int, size of addition in square feet
         addition_date: datetime, date addition was adde
         --------------------------------------------------
@@ -201,20 +188,20 @@ class DatabaseManager:
         int, last row id
         '''
         
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         
         try:
             cursor.execute("""
-            INSERT INTO Additions (congregation_id, addition_size,addition_date)
-            VALUES (?,?,?);
+            INSERT INTO additions (congregation_id, addition_size,addition_date)
+            VALUES (%s,%s,%s);
         """, (congregation_id, addition_size,addition_date))
-            connection.commit()
-        except sqlite3.Error as e:
+            conn.commit()
+        except psycopg2.Error as e:
             print(f"An error occurred: {e}")
-
+        conn.close()
         
-        return cursor.lastrowid
+        
     
     def insert_solar_potential(self, congregation_id,usable_sunlight,solar_panel_space,savings,co2_savings):
         '''
@@ -222,7 +209,7 @@ class DatabaseManager:
         ------------------------------------------------------------
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from Congregations table
+        congregation_id: int, id of congregation from congregations table
         usable_sunlight: int, amount of usable sunlight per year(hours)
         solar_panel_space: int, amount of space to put solar panels
         savings: int, amount of savings ($)
@@ -233,20 +220,20 @@ class DatabaseManager:
         int, last row id
         '''
         
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         
         try:
             cursor.execute("""
-            INSERT INTO Solar_potential (congregation_id, usable_sunlight,solar_panel_space,savings,co2_savings)
-            VALUES (?,?,?,?,?);
+            INSERT INTO solar_potential (congregation_id, usable_sunlight,solar_panel_space,savings,co2_savings)
+            VALUES (%s,%s,%s,%s,%s);
         """, (congregation_id, usable_sunlight,solar_panel_space,savings,co2_savings))
-            connection.commit()
-        except sqlite3.Error as e:
+            conn.commit()
+        except psycopg2.Error as e:
             print(f"An error occurred: {e}")
-
+        conn.close()
+         
         
-        return cursor.lastrowid
     
     def insert_climate_work(self, congregation_id,work_type,start_date,end_date,description, impact):
         '''
@@ -254,7 +241,7 @@ class DatabaseManager:
         ------------------------------------------------------------
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from Congregations table
+        congregation_id: int, id of congregation from congregations table
         work_type: string, category of climate work
         start_date: datetime, date the climate work started
         end_date: datetime, date the climate work ended
@@ -266,20 +253,20 @@ class DatabaseManager:
         int, last row id
         '''
         
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         
         try:
             cursor.execute("""
-            INSERT INTO Climate_work (congregation_id, work_type,start_date,end_date,description,impact)
-            VALUES (?,?,?,?,?,?);
+            INSERT INTO climate_work (congregation_id, work_type,start_date,end_date,description,impact)
+            VALUES (%s,%s,%s,%s,%s,%s);
         """, (congregation_id, work_type,start_date,end_date,description,impact))
-            connection.commit()
-        except sqlite3.Error as e:
+            conn.commit()
+        except psycopg2.Error as e:
             print(f"An error occurred: {e}")
-
+        conn.close()
         
-        return cursor.lastrowid
+        
     
     def insert_user(self, email, password_hash, role,congregation_id,approved):
         '''
@@ -287,7 +274,7 @@ class DatabaseManager:
         ------------------------------------------------------------
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from Congregations table
+        congregation_id: int, id of congregation from congregations table
         work_type: string, category of climate work
         start_date: datetime, date the climate work started
         end_date: datetime, date the climate work ended
@@ -299,24 +286,27 @@ class DatabaseManager:
         int, last row id
         '''
         
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-        
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
+        if approved==1:
+           approved=True
+        if approved==0:
+           approved=False
         try:
             cursor.execute("""
-            INSERT INTO Users (email, password_hash, role,congregation_id,approved)
-            VALUES (?,?,?,?,?);
+            INSERT INTO users (email, password_hash, role,congregation_id,approved)
+            VALUES (%s,%s,%s,%s,%s);
         """, (email, password_hash, role,congregation_id,approved))
-            connection.commit()
-        except sqlite3.Error as e:
+            conn.commit()
+        except psycopg2.Error as e:
             print(f"An error occurred: {e}")
-
+        conn.close()
     def get_congregation_id(self,congregation_name):
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       try:
          cursor.execute(
-            "SELECT congregation_id FROM Congregations WHERE name = ?",
+            "SELECT congregation_id FROM congregations WHERE name = %s",
             (congregation_name,)
          )
          result = cursor.fetchone()
@@ -324,7 +314,7 @@ class DatabaseManager:
             return result[0]  # first column = congregation_id
          else:
             return None
-      except sqlite3.Error as e:
+      except psycopg2.Error as e:
         print(f"An error occurred: {e}")
         return None
      
@@ -332,11 +322,11 @@ class DatabaseManager:
       query = """
         SELECT  congregation_id, name, address, 
                municipal_entity,denomination, size, email,phone_number,website 
-        FROM Congregations
-        WHERE congregation_id = ?
+        FROM congregations
+        WHERE congregation_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (congregation_id,))
       rows = cursor.fetchall()
      
@@ -358,11 +348,11 @@ class DatabaseManager:
       query = """
         SELECT facility_id, congregation_id, facility_size, age, 
                heating_sys, vent_sys, ac_sys, est_electric_bill
-        FROM Facilities
-        WHERE facility_id = ?
+        FROM facilities
+        WHERE facility_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (facility_id,))
       row = cursor.fetchone()
      
@@ -384,11 +374,11 @@ class DatabaseManager:
      
       query = """
         SELECT addition_id , congregation_id, addition_size,addition_date 
-        FROM Additions
-        WHERE addition_id = ?
+        FROM additions
+        WHERE addition_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (addition_id,))
       row = cursor.fetchone()
 
@@ -406,11 +396,11 @@ class DatabaseManager:
       query = """
         SELECT solar_pot_id, congregation_id, usable_sunlight,solar_panel_space,
          savings, co2_savings
-        FROM Solar_potential
-        WHERE solar_pot_id = ?
+        FROM solar_potential
+        WHERE solar_pot_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (solar_pot_id,))
       row= cursor.fetchone()
 
@@ -430,11 +420,11 @@ class DatabaseManager:
       query = """
         SELECT climate_work_id, congregation_id, work_type,start_date,end_date,
          description, impact
-        FROM Climate_work
-        WHERE climate_work_id = ?
+        FROM climate_work
+        WHERE climate_work_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (climate_work_id,))
       row = cursor.fetchone()
 
@@ -455,11 +445,11 @@ class DatabaseManager:
       query = """
         SELECT facility_id, congregation_id, facility_size, age, 
                heating_sys, vent_sys, ac_sys, est_electric_bill
-        FROM Facilities
-        WHERE congregation_id = ?
+        FROM facilities
+        WHERE congregation_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (congregation_id,))
       rows = cursor.fetchall()
      
@@ -483,11 +473,11 @@ class DatabaseManager:
      
       query = """
         SELECT addition_id , congregation_id, addition_size,addition_date 
-        FROM Additions
-        WHERE congregation_id = ?
+        FROM additions
+        WHERE congregation_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (congregation_id,))
       rows = cursor.fetchall()
 
@@ -507,11 +497,11 @@ class DatabaseManager:
       query = """
         SELECT solar_pot_id, congregation_id, usable_sunlight,solar_panel_space,
          savings, co2_savings
-        FROM Solar_potential
-        WHERE congregation_id = ?
+        FROM solar_potential
+        WHERE congregation_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (congregation_id,))
       rows = cursor.fetchall()
 
@@ -533,11 +523,11 @@ class DatabaseManager:
       query = """
         SELECT climate_work_id, congregation_id, work_type,start_date,end_date,
          description, impact
-        FROM Climate_work
-        WHERE congregation_id = ?
+        FROM climate_work
+        WHERE congregation_id = %s
       """
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       cursor.execute(query, (congregation_id,))
       rows = cursor.fetchall()
 
@@ -558,10 +548,10 @@ class DatabaseManager:
     
     def update_congregation(self, cong_id, data):
      query = """
-        UPDATE Congregations
-        SET name = ?, address = ?, municipal_entity = ?, denomination = ?,
-            size = ?, email = ?, phone_number = ?, website = ?
-        WHERE congregation_id = ?
+        UPDATE congregations
+        SET name = %s, address = %s, municipal_entity = %s, denomination = %s,
+            size = %s, email = %s, phone_number = %s, website = %s
+        WHERE congregation_id = %s
      """
      values = (
         data["name"], data["address"], data["municipal_entity"],
@@ -569,17 +559,17 @@ class DatabaseManager:
         data["phone_number"], data["website"], cong_id
     )
 
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, values)
      conn.commit()
-    
+     conn.close()
     def update_facility(self, facility_id, data):
      query = """
-        UPDATE Facilities
-        SET facility_size = ?, age = ?, heating_sys= ?, vent_sys = ?,
-            ac_sys = ?, est_electric_bill = ?
-        WHERE facility_id = ?
+        UPDATE facilities
+        SET facility_size = %s, age = %s, heating_sys= %s, vent_sys = %s,
+            ac_sys = %s, est_electric_bill = %s
+        WHERE facility_id = %s
      """
      
      values = (
@@ -587,32 +577,32 @@ class DatabaseManager:
         data["vent_sys"], data["ac_sys"], data["est_electric_bill"], facility_id
     )
 
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, values)
      conn.commit()
-    
+     conn.close()
     def update_addition(self, addition_id, data):
      query = """
-        UPDATE Additions
-        SET addition_size = ?, addition_date = ?
-        WHERE addition_id = ?
+        UPDATE additions
+        SET addition_size = %s, addition_date = %s
+        WHERE addition_id = %s
      """
      
      values = (
         data["addition_size"], data["addition_date"], addition_id
     )
 
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, values)
      conn.commit()
-    
+     conn.close()
     def update_solar(self, solar_pot_id, data):
      query = """
-        UPDATE Solar_Potential
-        SET usable_sunlight = ?, solar_panel_space = ?, savings= ?, co2_savings = ?
-        WHERE solar_pot_id = ?
+        UPDATE solar_potential
+        SET usable_sunlight = %s, solar_panel_space = %s, savings= %s, co2_savings = %s
+        WHERE solar_pot_id = %s
      """
      
      values = (
@@ -620,17 +610,17 @@ class DatabaseManager:
         data["co2_savings"], solar_pot_id
     )
 
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, values)
      conn.commit()
-    
+     conn.close()
     def update_climate_work(self, climate_work_id, data):
      query = """
-        UPDATE Climate_Work
-        SET work_type = ?, start_date = ?, end_date= ?, description = ?,
-            impact = ?
-        WHERE climate_work_id = ?
+        UPDATE climate_work
+        SET work_type = %s, start_date = %s, end_date= %s, description = %s,
+            impact = %s
+        WHERE climate_work_id = %s
      """
      
      values = (
@@ -638,40 +628,22 @@ class DatabaseManager:
         data["description"], data["impact"], climate_work_id
     )
 
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, values)
      conn.commit()
-    
+     conn.close()
     def delete_congregation(self, cong_id):
      
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      try:
-        # Delete facilities
-        for f in self.get_facilities_by_congregation(cong_id):
-            self.delete_facility(f["facility_id"])
-
-        # Delete additions
-        for a in self.get_additions_by_congregation(cong_id):
-            self.delete_addition(a["addition_id"])
-
-        # Delete solar potential entries
-        for s in self.get_solar_by_congregation(cong_id):
-            self.delete_Solar_Potential(s["solar_pot_id"])
-
-        # Delete climate work
-        for cw in self.get_climate_work_by_congregation(cong_id):
-            self.delete_Climate_Work(cw["climate_work_id"])
-
-        # Finally delete the congregation
         cur.execute(
-            "DELETE FROM Congregations WHERE congregation_id = ?",
+            "DELETE FROM congregations WHERE congregation_id = %s",
             (cong_id,)
         )
         conn.commit()
-
-     except sqlite3.Error as e:
+     except psycopg2.Error as e:
         print(f"Error deleting congregation {cong_id}: {e}")
         conn.rollback()
 
@@ -679,35 +651,35 @@ class DatabaseManager:
         conn.close()
     
     def delete_facility(self, facility_id):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
-     cur.execute("DELETE FROM Facilities WHERE facility_id = ?", (facility_id,))
+     cur.execute("DELETE FROM facilities WHERE facility_id = %s", (facility_id,))
      conn.commit()
-    
+     conn.close()
     def delete_addition(self, addition_id):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
-     cur.execute("DELETE FROM Additions WHERE addition_id = ?", (addition_id,))
+     cur.execute("DELETE FROM additions WHERE addition_id = %s", (addition_id,))
      conn.commit()
-    
+     conn.close()
     def delete_Solar_Potential(self, solar_pot_id):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
-     cur.execute("DELETE FROM Solar_Potential WHERE solar_pot_id = ?", (solar_pot_id,))
+     cur.execute("DELETE FROM solar_potential WHERE solar_pot_id = %s", (solar_pot_id,))
      conn.commit()
-    
+     conn.close()
     def delete_Climate_Work(self, climate_work_id):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
-     cur.execute("DELETE FROM Climate_Work WHERE climate_work_id = ?", (climate_work_id,))
+     cur.execute("DELETE FROM climate_work WHERE climate_work_id = %s", (climate_work_id,))
      conn.commit()
-    
+     conn.close()
     def delete_User(self, user_id):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
-     cur.execute("DELETE FROM Users WHERE id = ?", (user_id,))
+     cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
      conn.commit()
-    
+     conn.close()
     def drop_table(self,table_name):
         '''
         removes a table from the database
@@ -716,40 +688,40 @@ class DatabaseManager:
         ----------------------------------
         table_name: string, name of table
         '''
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         drop_table_sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(drop_table_sql)
-        connection.commit()
-    
+        conn.commit()
+        conn.close()
     def get_all_congregations(self):
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-        cursor.execute("SELECT congregation_id,name FROM Congregations")
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
+        cursor.execute("SELECT congregation_id,name FROM congregations")
         rows = cursor.fetchall()
         # Convert to list of dicts 
         return [{"congregation_id": row[0],"name": row[1]} for row in rows]
     
     def get_user_by_email(self, email):
         return self.fetchone(
-            "SELECT * FROM Users WHERE email = ?",
+            "SELECT * FROM users WHERE email = %s",
             (email,)
         )
 
     def get_user_by_id(self, user_id):
         row=self.fetchone(
-            "SELECT * FROM Users WHERE id = ?",
+            "SELECT * FROM users WHERE id = %s",
             (user_id,)
         )
         print("DEBUG ROW:", row)
         return row
     
     def get_user_id(self,email):
-      connection = sqlite3.connect(self.db_path)
-      cursor = connection.cursor()
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
       try:
          cursor.execute(
-            "SELECT id FROM Users WHERE email = ?",
+            "SELECT id FROM users WHERE email = %s",
             (email,)
          )
          result = cursor.fetchone()
@@ -757,37 +729,38 @@ class DatabaseManager:
             return result[0]  # first column = user_id
          else:
             return None
-      except sqlite3.Error as e:
+      except psycopg2.Error as e:
         print(f"An error occurred: {e}")
         return None
     
     def get_admin_emails(self):
-      rows = self.fetchall("SELECT email FROM Users WHERE role = 'admin'")
-      return [r["email"] for r in rows]  
+      rows = self.fetchall("SELECT email FROM users WHERE role = 'admin'")
+      return [r[0] for r in rows] 
     
     def approve_user(self, user_id):
-      conn = sqlite3.connect(self.db_path)
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
       cur = conn.cursor()
-      cur.execute("UPDATE Users SET approved = 1 WHERE id = ?", (user_id,))
+      cur.execute("UPDATE users SET approved = TRUE WHERE id = %s", (user_id,))
       conn.commit()
       conn.close()
     
     def close(self):
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         cursor.close()
-        connection.close()
+        conn.close()
     
     def fetchone(self, query, params=()):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, params)
      row = cur.fetchone()
-     return row
      conn.close()
+     return row
+     
     
     def fetchall(self, query, params=()):
-     conn = sqlite3.connect(self.db_path)
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, params)
      row = cur.fetchall()

@@ -7,7 +7,7 @@ from functools import wraps
 from db_manager import DatabaseManager
 from werkzeug.utils import secure_filename
 from parse_csv import parse_insert_additions_csv,parse_insert_climate_work_csv,parse_insert_congregation_csv,parse_insert_facilities_csv,parse_insert_solar_csv
-from flask_bcrypt import Bcrypt
+
 
 
 import os
@@ -78,7 +78,7 @@ def signup():
             password_hash=password_hash,
             role="user",
             congregation_id=None,
-            approved=0  # pending
+            approved=False  # pending
         )
 
         flash("Signup request submitted. Awaiting admin approval.")
@@ -141,7 +141,7 @@ def bootstrap():
 @login_required
 @admin_required
 def manage_users():
-    users = db.fetchall("SELECT email FROM Users WHERE approved = 0 AND role = 'user'")
+    users = db.fetchall("SELECT email FROM Users WHERE approved = FALSE AND role = 'user'")
     print("PENDING USERS:", users)
     return render_template("manage_users.html", users=users)
 @app.route("/admin/manage-users/create-user", methods=["GET", "POST"])
