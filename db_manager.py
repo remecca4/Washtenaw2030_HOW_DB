@@ -36,7 +36,8 @@ class DatabaseManager:
         size INTEGER,  -- amount of people in the HOW
         email TEXT,  
         phone_number TEXT,
-        website TEXT
+        website TEXT,
+        sf_member_status TEXT CHECK (sf_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member'))
        );"""
         cursor.execute(cong_table_script)
         facility_table_script="""
@@ -140,8 +141,6 @@ class DatabaseManager:
             print(f"An error occurred: {e}")
         conn.close()
         
-       
-
     def insert_facility(self, congregation_id,facility_size, age,heating_sys, vent_sys, ac_sys):
         '''
         Inserts a facility into the facilities table
@@ -201,8 +200,6 @@ class DatabaseManager:
             print(f"An error occurred: {e}")
         conn.close()
         
-        
-    
     def insert_solar_potential(self, congregation_id,usable_sunlight,solar_panel_space,savings,co2_savings):
         '''
         Inserts a congregation into the congres tabel
@@ -232,9 +229,7 @@ class DatabaseManager:
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
         conn.close()
-         
-        
-    
+          
     def insert_climate_work(self, congregation_id,work_type,start_date,end_date,description, impact):
         '''
         Inserts climate work into the climate work table
@@ -264,9 +259,7 @@ class DatabaseManager:
             conn.commit()
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
-        conn.close()
-        
-        
+        conn.close()   
     
     def insert_user(self, email, password_hash, role,congregation_id,approved):
         '''
@@ -301,6 +294,7 @@ class DatabaseManager:
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
         conn.close()
+    
     def get_congregation_id(self,congregation_name):
       conn = psycopg2.connect(os.environ["DATABASE_URL"])
       cursor = conn.cursor()
@@ -564,6 +558,7 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
+    
     def update_facility(self, facility_id, data):
      query = """
         UPDATE facilities
@@ -582,6 +577,7 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
+    
     def update_addition(self, addition_id, data):
      query = """
         UPDATE additions
@@ -598,6 +594,7 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
+    
     def update_solar(self, solar_pot_id, data):
      query = """
         UPDATE solar_potential
@@ -615,6 +612,7 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
+    
     def update_climate_work(self, climate_work_id, data):
      query = """
         UPDATE climate_work
@@ -633,6 +631,7 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
+   
     def delete_congregation(self, cong_id):
      
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
@@ -656,30 +655,35 @@ class DatabaseManager:
      cur.execute("DELETE FROM facilities WHERE facility_id = %s", (facility_id,))
      conn.commit()
      conn.close()
+   
     def delete_addition(self, addition_id):
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM additions WHERE addition_id = %s", (addition_id,))
      conn.commit()
      conn.close()
+    
     def delete_Solar_Potential(self, solar_pot_id):
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM solar_potential WHERE solar_pot_id = %s", (solar_pot_id,))
      conn.commit()
      conn.close()
+    
     def delete_Climate_Work(self, climate_work_id):
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM climate_work WHERE climate_work_id = %s", (climate_work_id,))
      conn.commit()
      conn.close()
+    
     def delete_User(self, user_id):
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
      conn.commit()
      conn.close()
+    
     def drop_table(self,table_name):
         '''
         removes a table from the database
@@ -694,6 +698,7 @@ class DatabaseManager:
         cursor.execute(drop_table_sql)
         conn.commit()
         conn.close()
+    
     def get_all_congregations(self):
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()

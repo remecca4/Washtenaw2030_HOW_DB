@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}HOW Contacts{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1200px; margin:auto;">
+    <h1 class="title">HOW Contact List</h1>
+
+    <!-- Filter Form -->
+    <form method="GET" action="/contacts" class="filter-form" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+            <label for="municipal-select">Municipal Entity:</label>
+            <select name="municipal" id="municipal-select">
+                <option value="">All</option>
+                {% for m in municipal_options %}
+                    <option value="{{ m }}" {% if selected_municipal == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="denom-select">Denomination:</label>
+            <select name="denomination" id="denom-select">
+                <option value="">All</option>
+                {% for d in denomination_options %}
+                    <option value="{{ d }}" {% if selected_denomination == d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="sf-select">Solar Faithful Member Status:</label>
+            <select name="sf_status" id="sf-select">
+                <option value="">All</option>
+                {% for s in sf_options %}
+                    <option value="{{ s }}" {% if selected_sf_status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <button type="submit" class="button">Filter</button>
+        </div>
+    </form>
+
+    <!-- Contacts Table -->
+    {% if hows %}
+    <div style="overflow-x:auto; margin-top:1rem;">
+        <table class="table" style="width:100%; min-width:900px;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Municipal Entity</th>
+                    <th>Denomination</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>SF Member Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in hows %}
+                <tr>
+                    <td>{{ h[0] }}</td>
+                    <td>{{ h[1] }}</td>
+                    <td>{{ h[2] }}</td>
+                    <td>{{ h[3] }}</td>
+                    <td>{{ h[4] }}</td>
+                    <td>{{ h[5] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="empty-text">No HOW contacts found for selected filters.</p>
+    {% endif %}
+</div>
+{% endblock %}

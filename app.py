@@ -12,6 +12,8 @@ from parse_csv import parse_insert_additions_csv,parse_insert_climate_work_csv,p
 
 import os
 app = Flask(__name__)
+print(__name__)
+
 db = DatabaseManager()
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-key") 
 
@@ -33,8 +35,6 @@ class User(UserMixin):
 def load_user(user_id):
    row = db.get_user_by_id(user_id)
    return User(row) if row else None
-
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -86,8 +86,6 @@ def signup():
 
     return render_template("signup.html")
 
-
-
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -99,8 +97,6 @@ def admin_required(f):
 def admin_exists():
     row = db.fetchone("SELECT 1 FROM Users WHERE role = 'admin'")
     return row is not None
-
-
 
 @app.route("/admin/manage-users/approve/<email>")
 @login_required
@@ -144,6 +140,7 @@ def manage_users():
     users = db.fetchall("SELECT email FROM Users WHERE approved = FALSE AND role = 'user'")
     print("PENDING USERS:", users)
     return render_template("manage_users.html", users=users)
+
 @app.route("/admin/manage-users/create-user", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -160,6 +157,7 @@ def create_user():
         return redirect("/")
 
     return render_template("manage_users.html")
+
 @app.route("/admin/manage-users/remove-user", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -173,6 +171,7 @@ def remove_user():
         return redirect("/")
 
     return render_template("manage_users.html")
+
 # Home page
 @app.route("/")
 def home():
@@ -189,7 +188,6 @@ def view_forms():
     )
 
 # Add congregation
-
 @app.route("/congregation/add", methods=["POST"])
 @login_required
 def congregation_form():
@@ -269,7 +267,6 @@ def climate_work_form():
 def view_congregations():
     congregations = db.get_all_congregations()
     selected_id = request.args.get("id", type=int) # from dropdown selection
-    print(selected_id)
     selected_congregation = None
     facilities = []
     additions = []
@@ -398,7 +395,6 @@ def edit_solar(solar_pot_id):
                            solar_pot=solar_pot,
                            congregation_name=congregation_name)
 
-
 @app.route("/delete_solar/<int:solar_pot_id>", methods=["POST"])
 @login_required
 def delete_solar(solar_pot_id):
@@ -436,9 +432,6 @@ def delete_climate_work(climate_work_id):
     db.delete_Climate_Work(climate_work_id)
     return redirect("/congregations")
 
-
-
-
 UPLOAD_FOLDER = "/tmp"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -464,7 +457,6 @@ def upload_congregations_csv():
 
     flash("Congregations CSV Imported!.")
     return redirect(request.referrer)
-
 
 @app.route("/upload/facilities")
 @login_required
@@ -514,7 +506,6 @@ def upload_additions_csv():
 
 @app.post("/upload/solar")
 @login_required
-
 def upload_solar_csv():
     file = request.files.get("csv_file")
     if not file or file.filename == "":
@@ -557,5 +548,49 @@ def upload_climate_work_csv():
     ).start()
     flash("Climate Work CSV imported!")
     return redirect(request.referrer)
+
+@app.route("/contacts")
+def how_contacts():
+    municipal = request.args.get("municipal")
+    denomination = request.args.get("denomination")
+    sf_status = request.args.get("sf_status")
+    # Base query
+    query = "SELECT name, municipal_entity, denomination, email, phone_number, sf_member_status FROM congregations"
+    conditions = []
+    params = []
+
+    # Add filters
+    if municipal:
+        conditions.append("municipal_entity = %s")
+        params.append(municipal)
+    if denomination:
+        conditions.append("denomination = %s")
+        params.append(denomination)
+    if sf_status:
+      conditions.append("sf_member_status = %s")
+      params.append(sf_status)
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    
+    query += " ORDER BY name"
+
+    # Fetch HOWs
+    congregations = db.fetchall(query, params)
+
+    # Fetch distinct options for filters
+    municipal_options = [row[0] for row in db.fetchall("SELECT DISTINCT municipal_entity FROM congregations ORDER BY municipal_entity")]
+    denomination_options = [row[0] for row in db.fetchall("SELECT DISTINCT denomination FROM congregations ORDER BY denomination")]
+    sf_options = [row[0] for row in db.fetchall("SELECT DISTINCT sf_member_status FROM congregations ORDER BY sf_member_status")]
+    return render_template(
+        "contacts.html",
+        hows=congregations,
+        municipal_options=municipal_options,
+        denomination_options=denomination_options,
+        sf_options=sf_options,
+        selected_municipal=municipal,
+        selected_denomination=denomination,
+        selected_sf_status=sf_status
+    )
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
