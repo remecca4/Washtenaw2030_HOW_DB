@@ -33,7 +33,7 @@ class DatabaseManager:
         address TEXT NOT NULL,
         municipal_entity TEXT, -- eg. Ann Arbor, Chelsea, etc.
         denomination TEXT,
-        size INTEGER,  -- amount of people in the HOW
+        size INTEGER DEFAULT 0,  -- amount of people in the HOW
         email TEXT,  
         phone_number TEXT,
         website TEXT,
@@ -109,7 +109,7 @@ class DatabaseManager:
         print("CLEAR TABLES")
         conn.close()
 
-    def insert_congregation(self, name,address, municipal_entity, denomination, size, email,phone_number,website):
+    def insert_congregation(self, name,address, municipal_entity, denomination, size, email,phone_number,website,sf_member_status="Unknown"):
         '''
         Inserts a congregation into the congregations table
         ------------------------------------------------------------
@@ -133,15 +133,15 @@ class DatabaseManager:
        
         try:
             cursor.execute("""
-            INSERT INTO congregations (name, address,municipal_entity, denomination, size, email,phone_number,website)
+            INSERT INTO congregations (name, address,municipal_entity, denomination, size, email,phone_number,website,sf_member_status)
             VALUES (%s, %s, %s,%s, %s, %s,%s,%s);
-        """, (name, address,municipal_entity, denomination, size, email,phone_number,website))
+        """, (name, address,municipal_entity, denomination, size, email,phone_number,website,sf_member_status))
             conn.commit()
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
         conn.close()
         
-    def insert_facility(self, congregation_id,facility_size, age,heating_sys, vent_sys, ac_sys):
+    def insert_facility(self, congregation_id,facility_size, age,heating_sys, vent_sys, ac_sys,est_electric_bill=None):
         '''
         Inserts a facility into the facilities table
         ------------------------------------------------------------
@@ -158,7 +158,8 @@ class DatabaseManager:
         --------------------------------------------------
         int, last row id
         '''
-        
+        if est_electric_bill==None:
+           est_electric_bill=1.38*facility_size
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
         
@@ -166,7 +167,7 @@ class DatabaseManager:
             cursor.execute("""
             INSERT INTO facilities (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,est_electric_bill)
             VALUES (%s,%s,%s,%s,%s,%s,%s);
-        """, (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,1.38*facility_size))
+        """, (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,est_electric_bill))
             conn.commit()
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
@@ -315,7 +316,7 @@ class DatabaseManager:
     def get_congregation_by_id(self,congregation_id):
       query = """
         SELECT  congregation_id, name, address, 
-               municipal_entity,denomination, size, email,phone_number,website 
+               municipal_entity,denomination, size, email,phone_number,website, sf_member_status 
         FROM congregations
         WHERE congregation_id = %s
       """
@@ -335,6 +336,7 @@ class DatabaseManager:
             "email": rows[0][6],
             "phone_number": rows[0][7],
             "website": rows[0][8],
+            "sf_member_status": rows[0][9]
         }
       return congs  
     
@@ -541,16 +543,19 @@ class DatabaseManager:
       return work
     
     def update_congregation(self, cong_id, data):
+     if not(data["size"] and data["size"].isdigit()):
+       data["size"]=0
      query = """
         UPDATE congregations
         SET name = %s, address = %s, municipal_entity = %s, denomination = %s,
-            size = %s, email = %s, phone_number = %s, website = %s
+            size = %s, email = %s, phone_number = %s, website = %s, sf_member_status=%s
         WHERE congregation_id = %s
      """
+     print(data)
      values = (
         data["name"], data["address"], data["municipal_entity"],
         data["denomination"], data["size"], data["email"],
-        data["phone_number"], data["website"], cong_id
+        data["phone_number"], data["website"], data["sf_member_status"], cong_id
     )
 
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
@@ -560,6 +565,13 @@ class DatabaseManager:
      conn.close()
     
     def update_facility(self, facility_id, data):
+        
+     if not(data["facility_size"] and data["facility_size"].isdigit()):
+       data["facility_size"]=0
+     if not(data["age"] and data["age"].isdigit()):
+       data["age"]=0
+     if not(data["est_electric_bill"] and data["est_electric_bill"].isdigit()):
+       data["est_electric_bill"]=0
      query = """
         UPDATE facilities
         SET facility_size = %s, age = %s, heating_sys= %s, vent_sys = %s,
@@ -579,6 +591,8 @@ class DatabaseManager:
      conn.close()
     
     def update_addition(self, addition_id, data):
+     if not(data["addition_size"] and data["addition_size"].isdigit())==None:
+       data["addition_size"]=0
      query = """
         UPDATE additions
         SET addition_size = %s, addition_date = %s
@@ -596,6 +610,14 @@ class DatabaseManager:
      conn.close()
     
     def update_solar(self, solar_pot_id, data):
+     if not(data["usable_sunlight"] and data["usable_sunlight"].isdigit()):
+       data["usable_sunlight"]=0
+     if not(data["solar_panel_space"] and data["solar_panel_space"].isdigit()):
+       data["solar_panel_space"]=0
+     if not(data["savings"] and data["savings"].isdigit()):
+       data["savings"]=0
+     if not(data["co2_savings"] and data["co2_savings"].isdigit()):
+       data["co2_savings"]=0
      query = """
         UPDATE solar_potential
         SET usable_sunlight = %s, solar_panel_space = %s, savings= %s, co2_savings = %s
@@ -702,7 +724,7 @@ class DatabaseManager:
     def get_all_congregations(self):
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
-        cursor.execute("SELECT congregation_id,name FROM congregations")
+        cursor.execute("SELECT congregation_id,name FROM congregations ORDER BY name")
         rows = cursor.fetchall()
         # Convert to list of dicts 
         return [{"congregation_id": row[0],"name": row[1]} for row in rows]

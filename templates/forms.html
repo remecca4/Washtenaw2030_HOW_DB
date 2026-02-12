@@ -23,9 +23,18 @@
     <label>Municipal Entity <input type="text" name="municipal_entity"></label>
     <label>Denomination <input type="text" name="denomination"></label>
     <label>Size (sq ft) <input type="number" name="size"></label>
-    <label>Email <input type="email" name="email"></label>
+    <label>Email <input type="text" name="email"></label>
     <label>Phone Number <input type="text" name="phone_number"></label>
-    <label>Website <input type="url" name="website"></label>
+    <label>Website <input type="text" name="website"></label>
+   <label>
+  Solar Faithful Member Status
+  <select name="sf_member_status">
+    <option value="Unknown">Unknown</option>
+    <option value="Interested">Interested</option>
+    <option value="Member">Member</option>
+    <option value="Not Interested">Not Interested</option>
+  </select>
+</label>
     <button class="button" type="submit">Add Congregation</button>
 </form>
 
@@ -53,6 +62,7 @@
     <label>Heating System <input type="text" name="heating_sys"></label>
     <label>Ventilation System <input type="text" name="vent_sys"></label>
     <label>AC System <input type="text" name="ac_sys"></label>
+    <label>Electric Bill($) <input type="number" name="electric_bill"></label>
     <button class="button" type="submit">Save Facility</button>
 </form>
 

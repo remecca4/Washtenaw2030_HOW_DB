@@ -42,6 +42,7 @@
         <p><strong>Website:</strong> 
             <a href="{{ selected_congregation.website }}" target="_blank">{{ selected_congregation.website }}</a>
         </p>
+        <p><strong>Solar Faithful Member Status:</strong> {{ selected_congregation.sf_member_status }}</p>
         {% endif %}
     </div>
      {% if current_user.is_authenticated  %}
@@ -64,7 +65,7 @@
                 <p><strong>Heating:</strong> {{ f.heating_sys }}</p>
                 <p><strong>Ventilation:</strong> {{ f.vent_sys }}</p>
                 <p><strong>AC:</strong> {{ f.ac_sys }}</p>
-                <p><strong>Estimated Bill:</strong> ${{ f.est_electric_bill }}</p>
+                <p><strong>Electric Bill:</strong> ${{ f.est_electric_bill }}</p>
             </div>
             {% if current_user.is_authenticated %}
             <div class="button-row">

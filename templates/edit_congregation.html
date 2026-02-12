@@ -28,14 +28,21 @@
         <input type="number" id="size" name="size" value="{{ congregation['size'] }}">
 
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" value="{{ congregation['email'] }}">
+        <input type="text" id="email" name="email" value="{{ congregation['email'] }}">
 
         <label for="phone_number">Phone Number:</label>
         <input type="text" id="phone_number" name="phone_number" value="{{ congregation['phone_number'] }}">
 
         <label for="website">Website:</label>
-        <input type="url" id="website" name="website" value="{{ congregation['website'] }}">
+        <input type="text" id="website" name="website" value="{{ congregation['website'] }}">
 
+        <label for="sf_member_status">Solar Faithful Member Status:</label>
+       <select id="sf_member_status" name="sf_member_status">
+       <option value="Unknown" {% if congregation['sf_member_status'] == 'Unknown' %}selected{% endif %}>Unknown</option>
+       <option value="Interested" {% if congregation['sf_member_status'] == 'Interested' %}selected{% endif %}>Interested</option>
+       <option value="Member" {% if congregation['sf_member_status'] == 'Member' %}selected{% endif %}>Member</option>
+       <option value="Not Interested" {% if congregation['sf_member_status'] == 'Not Interested' %}selected{% endif %}>Not Interested</option>
+</select>
         <div class="button-group">
          <button type="submit" class="button">Save Changes</button>
          <a href="/congregations?id={{ congregation['congregation_id'] }}" class="button button-reject">Cancel</a>

@@ -200,8 +200,8 @@ def congregation_form():
     email = request.form.get("email")
     phone_number = request.form.get("phone_number")
     website = request.form.get("website") or None
-
-    db.insert_congregation(name, address, municipal_entity, denomination, size, email, phone_number, website)
+    sf_member_status=request.form.get("sf_member_status") or None
+    db.insert_congregation(name, address, municipal_entity, denomination, size, email, phone_number, website,sf_member_status)
     return redirect(url_for("view_forms"))
 
 # Add facility
@@ -216,8 +216,9 @@ def facilities_form():
     heating_sys = request.form.get("heating_sys")
     vent_sys = request.form.get("vent_sys")
     ac_sys = request.form.get("ac_sys")
-
-    db.insert_facility(congregation_id, facility_size, age, heating_sys, vent_sys, ac_sys)
+    electric_bill=request.form.get("electric_bill") 
+    electric_bill = int(electric_bill) if electric_bill and electric_bill.isdigit() else None
+    db.insert_facility(congregation_id, facility_size, age, heating_sys, vent_sys, ac_sys,electric_bill)
     return redirect(url_for("view_forms"))
 
 # Add addition
@@ -305,6 +306,7 @@ def edit_congregation(cong_id):
             "email": request.form["email"],
             "phone_number": request.form["phone_number"],
             "website": request.form["website"],
+            "sf_member_status":request.form["sf_member_status"]
         }
         db.update_congregation(cong_id, data)
         return redirect(f"/congregations?id={cong_id}")
