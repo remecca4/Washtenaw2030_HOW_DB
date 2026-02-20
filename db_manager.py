@@ -90,14 +90,23 @@ class DatabaseManager:
         id SERIAL PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
-        role TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('user', 'admin')),
         congregation_id INTEGER REFERENCES congregations(congregation_id) ON DELETE CASCADE,
         approved BOOLEAN NOT NULL DEFAULT FALSE
         );
         """
         cursor.execute(users_table_script)
         conn.commit()
-
+        
+        case_study_table_script="""
+           CREATE TABLE IF NOT EXISTS case_studies (
+             case_study_id SERIAL PRIMARY KEY,
+             congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+             case_study_path TEXT
+            );
+         """
+        cursor.execute(case_study_table_script)
+        conn.commit()
     def clear_tables(self):
         '''
         clears all tables in database
@@ -262,19 +271,21 @@ class DatabaseManager:
             print(f"An error occurred: {e}")
         conn.close()   
     
-    def insert_user(self, email, password_hash, role,congregation_id,approved):
+    def insert_user(self, email, password_hash, role,congregation_id=None,approved=False):
         '''
-        Inserts climate work into the climate work table
-        ------------------------------------------------------------
+        Summary
+        ---------------------------------------------------------------
+        Inserts user into the Users table
+        
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from congregations table
-        work_type: string, category of climate work
-        start_date: datetime, date the climate work started
-        end_date: datetime, date the climate work ended
-        description: string, description of climate work
-        impact: string, description of climate work impact
-        --------------------------------------------------
+        :param email: string, user's email
+        :param password_hash: string, users password put through hashing function
+        :param role: string, date either "user" or "admin"
+        :param description: string, description of climate work
+        :param congregation_id: int, id of congregation from congregations table
+        :param approved: bool, true if user has been approved by and admin
+        
         Returns
         --------------------------------------------------
         int, last row id
@@ -295,23 +306,33 @@ class DatabaseManager:
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
         conn.close()
-    
-    def get_congregation_id(self,congregation_name):
-      conn = psycopg2.connect(os.environ["DATABASE_URL"])
-      cursor = conn.cursor()
-      try:
-         cursor.execute(
-            "SELECT congregation_id FROM congregations WHERE name = %s",
-            (congregation_name,)
-         )
-         result = cursor.fetchone()
-         if result:
-            return result[0]  # first column = congregation_id
-         else:
-            return None
-      except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
-        return None
+    def insert_case_study(self, congregation_id,case_study_path):
+        '''
+        Summary
+        ------------------------------------------------------------
+        Inserts a case study into the case study table
+        
+        Parameters
+        ------------------------------------------------------------
+        :param congregation_id: int, id of congregation from congregations table
+        :param case_study_path: string, path to case study image
+        
+        Returns
+        --------------------------------------------------
+        int, last row id
+        '''
+        
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT INTO case_studies (congregation_id,case_study_path)
+            VALUES (%s,%s);
+        """, (congregation_id,case_study_path))
+            conn.commit()
+        except psycopg2.Error as e:
+            print(f"An error occurred: {e}")
+        conn.close()
      
     def get_congregation_by_id(self,congregation_id):
       query = """
@@ -339,7 +360,26 @@ class DatabaseManager:
             "sf_member_status": rows[0][9]
         }
       return congs  
+    def get_case_study_by_cong_id(self,congregation_id):
+      query = """
+        SELECT  case_study_id, congregation_id, case_study_path
+        FROM case_studies
+        WHERE congregation_id = %s
+      """
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
+      cursor.execute(query, (congregation_id,))
+      rows = cursor.fetchall()
+     
     
+      cs = []
+      for row in rows:
+        cs.append({
+            "case_study_id": row[0],
+            "congregation_id": row[1],
+            "case_study_path": row[2],
+        })
+      return cs
     def get_facility_by_id(self, facility_id):
       query = """
         SELECT facility_id, congregation_id, facility_size, age, 
@@ -653,7 +693,23 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
-   
+    
+    def update_case_study(self, congregation_id, case_study_path):
+     query = """
+        UPDATE case_studies
+        SET case_study= %s
+        WHERE climate_work_id = %s
+     """
+     
+     values = (
+       case_study_path, congregation_id
+    )
+
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
+     cur = conn.cursor()
+     cur.execute(query, values)
+     conn.commit()
+     conn.close()
     def delete_congregation(self, cong_id):
      
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
@@ -706,6 +762,22 @@ class DatabaseManager:
      conn.commit()
      conn.close()
     
+    def delete_case_study(self, case_study_id):
+     
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
+     cur = conn.cursor()
+     try:
+        cur.execute(
+            "DELETE FROM case_studies WHERE case_study_id = %s",
+            (case_study_id,)
+        )
+        conn.commit()
+     except psycopg2.Error as e:
+        print(f"Error deleting case study {case_study_id}: {e}")
+        conn.rollback()
+
+     finally:
+        conn.close()
     def drop_table(self,table_name):
         '''
         removes a table from the database
@@ -725,6 +797,13 @@ class DatabaseManager:
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
         cursor.execute("SELECT congregation_id,name FROM congregations ORDER BY name")
+        rows = cursor.fetchall()
+        # Convert to list of dicts 
+        return [{"congregation_id": row[0],"name": row[1]} for row in rows]
+    def get_all_case_study_cong_ids(self):
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT C.congregation_id,C.name FROM congregations C INNER JOIN case_studies CS ON CS.congregation_id=C.congregation_id ORDER BY C.name")
         rows = cursor.fetchall()
         # Convert to list of dicts 
         return [{"congregation_id": row[0],"name": row[1]} for row in rows]

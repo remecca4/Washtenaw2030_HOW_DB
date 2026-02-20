@@ -1,6 +1,6 @@
 from datetime import datetime as datetime
 import threading
-from flask import Flask, render_template, request, redirect, url_for,Blueprint, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from functools import wraps
@@ -21,9 +21,19 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
-#user stuff
+
 class User(UserMixin):
     def __init__(self, row):
+        '''
+        Summary
+        ---------------------------------------------------------------------
+        User Class Constructor
+       
+        Parameters
+        ---------------------------------------------------------------------
+        :param  row: list, row in the users table with the following elements:
+         :param user_id, email, passsword hash, role, congregation_id, approved status
+        '''
         self.id = row[0]
         self.email = row[1]
         self.password_hash = row[2]
@@ -33,11 +43,36 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
+   '''
+   Summary
+   ----------------------------------------------------
+   Gets user row from database  and makes a User Object 
+   using the user's id 
+   
+   Parameters
+   -----------------------------------------------------
+   :param user_id: int, id of user to return
+  
+   Returns
+   -----------------------------------------------------
+   User Object
+   '''
    row = db.get_user_by_id(user_id)
    return User(row) if row else None
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    '''
+    Summary
+    -------------------------------------------------------------------
+    Called when someone tries to log in. Redirects user to home page if 
+    a login is successful. Returns to login page if login is unsuccesful
+   
+    Returns
+    --------------------------------------------------------------------
+    Render template if unsuccessful login
+    Redirect Response Object if login is succssful
+    '''
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
@@ -46,10 +81,7 @@ def login():
         print(user_id)
         row = db.get_user_by_id(user_id)
         print(row)
-        #print(row[2])
         if row and bcrypt.check_password_hash(row[2], password):
-         
-
          if row[5] == 0:
           flash("Your account is awaiting admin approval.")
           return redirect("/login")
@@ -61,11 +93,30 @@ def login():
 @app.route("/logout")
 @login_required
 def logout():
+    '''
+    -------------------------------------------------------------------
+    Summary
+    -------------------------------------------------------------------
+    Called when a user logs out. Logs user out and redirects user to login page.
+  
+    Returns
+    --------------------------------------------------------------------
+    Redirect Response Object to login page
+    '''
     logout_user()
     return redirect(url_for("login"))
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    '''
+    Summary
+    ----------------------------------------------------------
+    Creates a new user with a pending approval status
+
+    Returns
+    --------------------------------------------------------------------
+    Redirect Response Object to login page
+    '''
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
@@ -87,6 +138,9 @@ def signup():
     return render_template("signup.html")
 
 def admin_required(f):
+    '''
+   Function that hides parts of the website for non-admin users
+    '''
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role != "admin":
@@ -95,6 +149,15 @@ def admin_required(f):
     return decorated_function
 
 def admin_exists():
+    '''
+   Summary
+   ------------------------------------------------------------
+   Checks if a user with an admin role exisits in the database
+   
+   Returns
+   ------------------------------------------------------------
+   User row if admin exists or None if no admin exists.
+    '''
     row = db.fetchone("SELECT 1 FROM Users WHERE role = 'admin'")
     return row is not None
 
@@ -102,7 +165,19 @@ def admin_exists():
 @login_required
 @admin_required
 def approve_user(email):
+    '''
+    Summary
+    -------------------------------------------
+    Approves a user with `email` as their email
     
+    Parameters
+    ---------------------------------------------
+    :param email: str, email of user to approve
+
+    Returns
+    ---------------------------------------------
+    Redirect Response Object to manage users page
+    '''
     user_id=db.get_user_id(email)
     db.approve_user(user_id)
     flash(f"{email} approved!")
@@ -112,31 +187,40 @@ def approve_user(email):
 @login_required
 @admin_required
 def reject_user(email):
+    '''
+    Summary
+    -------------------------------------------
+    Rejects and  a user with `email` as their email 
+    by removing them from the database
+    
+    Parameters
+    ---------------------------------------------
+    :param email: str, email of user to reject
+
+    Returns
+    ---------------------------------------------
+    Redirect Response Object to manage users page
+    '''
     user_id=db.get_user_id(email)
     db.delete_User(user_id)
     flash(f"{email} rejected.")
     return redirect("/admin/manage-users")
-
-def bootstrap():
-    if admin_exists():
-        return "Admin already exists", 403
-
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-        password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
-
-        db.insert_user(email=email, password_hash=password_hash, role="admin",congregation_id=None)
-        flash("Admin registered!")
-        return redirect("/login")
-
-    return render_template("bootstrap.html")
 
 
 @app.route("/admin/manage-users")
 @login_required
 @admin_required
 def manage_users():
+    '''
+    Summary
+    -----------------------------------
+    Selects all pending users to approve
+
+    Returns
+    -------------------------------------
+    Render template to manage_users.html
+
+    '''
     users = db.fetchall("SELECT email FROM Users WHERE approved = FALSE AND role = 'user'")
     print("PENDING USERS:", users)
     return render_template("manage_users.html", users=users)
@@ -145,13 +229,24 @@ def manage_users():
 @login_required
 @admin_required
 def create_user():
+    '''
+    Summary
+    ------------------------------------------------------
+    Inserts a user into the database using data recieved 
+    from the create user website form.
+    
+    Returns
+    ------------------------------------------------------
+    Redirect Response Object to home page
+
+    '''
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
         role = request.form["role"]
 
         password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
-        db.insert_user(email=email, password_hash=password_hash, role=role,congregation_id=None)
+        db.insert_user(email=email, password_hash=password_hash, role=role,congregation_id=None,approved=True)
 
         flash("User registered!")
         return redirect("/")
@@ -162,6 +257,17 @@ def create_user():
 @login_required
 @admin_required
 def remove_user():
+    '''
+    Summary
+    ------------------------------------------------------
+    Removes a user from the database using data recieved 
+    from the remove user website form.
+    
+    Returns
+    ------------------------------------------------------
+    Render template to manage users page
+
+    '''
     if request.method == "POST":
         email = request.form["email"]
         print("email")
@@ -175,22 +281,46 @@ def remove_user():
 # Home page
 @app.route("/")
 def home():
+    '''
+    Returns render template to home page
+    '''
     return render_template("home.html")
 
-# Combined forms page
+
 @app.route("/forms", methods=["GET"])
 def view_forms():
+    '''
+    Summary
+    ------------------------------------------
+     Displays the combined forms page
+
+    Returns
+    -----------------------------------------
+    Render Template to forms.html 
+    with all congregations for the dropdowns
+    '''
     congregations = db.get_all_congregations()
     return render_template(
         "forms.html",
         congregations=congregations,
-        upload_congregations_url=url_for("upload_congregations_csv")  # add this
+        upload_congregations_url=url_for("upload_congregations_csv")  
     )
 
-# Add congregation
+
 @app.route("/congregation/add", methods=["POST"])
 @login_required
 def congregation_form():
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from congregation form and inserts it 
+    into the congregation table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
     name = request.form.get("name")
     address = request.form.get("address")
     municipal_entity = request.form.get("municipal_entity")
@@ -204,11 +334,22 @@ def congregation_form():
     db.insert_congregation(name, address, municipal_entity, denomination, size, email, phone_number, website,sf_member_status)
     return redirect(url_for("view_forms"))
 
-# Add facility
+
 @app.route("/facility/add", methods=["POST"])
 @login_required
 def facilities_form():
-    congregation_id = int(request.form["congregation_id"])  # selected from dropdown
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from facilities form and inserts it 
+    into the facilities table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
+    congregation_id = int(request.form["congregation_id"])  
     facility_size = request.form.get("facility_size")
     facility_size = int(facility_size) if facility_size and facility_size.isdigit() else None
     age = request.form.get("age")
@@ -221,10 +362,21 @@ def facilities_form():
     db.insert_facility(congregation_id, facility_size, age, heating_sys, vent_sys, ac_sys,electric_bill)
     return redirect(url_for("view_forms"))
 
-# Add addition
+
 @app.route("/addition/add", methods=["POST"])
 @login_required
 def additions_form():
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from addition form and inserts it 
+    into the additions table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
     congregation_id = int(request.form["congregation_id"])  # selected from dropdown
     addition_size = request.form.get("addition_size")
     addition_size = int(addition_size) if addition_size and addition_size.isdigit() else None
@@ -233,10 +385,20 @@ def additions_form():
     db.insert_addition(congregation_id, addition_size,addition_date)
     return redirect(url_for("view_forms"))
 
-# Add solar potential
 @app.route("/solar/add", methods=["POST"])
 @login_required
 def solar_form():
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from solar form and inserts it 
+    into the csolar potential table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
     congregation_id = int(request.form["congregation_id"])
     usable_sunlight = request.form.get("usable_sunlight")
     usable_sunlight = int(usable_sunlight) if usable_sunlight and usable_sunlight.isdigit() else None
@@ -252,6 +414,17 @@ def solar_form():
 @app.route("/climate_work/add", methods=["POST"])
 @login_required
 def climate_work_form():
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from climate work form and inserts it 
+    into the climate work table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
     congregation_id = int(request.form["congregation_id"])
     work_type=request.form.get("work_type")
     start_date_raw = request.form.get("start_date")
@@ -263,9 +436,50 @@ def climate_work_form():
     db.insert_climate_work(congregation_id,work_type,start_date,end_date,description,impact)
     return redirect(url_for("view_forms"))
 
-# View congregations page
+@app.route("/case_study/add", methods=["POST"])
+@login_required
+def case_study_form():
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from climate work form and inserts it 
+    into the climate work table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
+    congregation_id = int(request.form["congregation_id"])
+    
+    
+    file = request.files.get("case_study_image")
+    if not file or file.filename == "":
+        flash("No case study uploaded.")
+        return redirect(request.referrer)
+
+    filename = secure_filename(file.filename)
+    path = os.path.join(app.static_folder, filename)
+    file.save(path)
+
+    db.insert_case_study(congregation_id,filename)
+    return redirect(url_for("view_forms"))
+    
+
 @app.route("/congregations", methods=["GET"])
 def view_congregations():
+    '''
+    Summary
+    -------------------------------------
+    Displays all information about the 
+    congregation selected from the dropdown menu
+    
+    Returns
+    ------------------------------------------
+    Render Template to forms.html 
+    with all congregations for the dropdowns 
+    and selected congregation to display
+    '''
     congregations = db.get_all_congregations()
     selected_id = request.args.get("id", type=int) # from dropdown selection
     selected_congregation = None
@@ -296,6 +510,21 @@ def view_congregations():
 @app.route("/edit_congregation/<int:cong_id>", methods=["GET", "POST"])
 @login_required
 def edit_congregation(cong_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Edits congregation with id `cong_id` in database 
+    with data provided by website form
+    
+    Parameters
+    -------------------------------------------------
+     :param cong_id: int, id of congregation to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page for 
+    the congreagtion with id=`cong_id`
+    '''
     if request.method == "POST":
         data = {
             "name": db.get_congregation_by_id(cong_id)["name"],
@@ -317,12 +546,40 @@ def edit_congregation(cong_id):
 @app.route("/delete_congregation/<int:cong_id>", methods=["POST"])
 @login_required
 def delete_congregation(cong_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes congregation with id `cong_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param cong_id: int, id of congregation to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
     db.delete_congregation(cong_id)
     return redirect("/congregations")
 
 @app.route("/edit_facility/<int:facility_id>", methods=["GET", "POST"])
 @login_required
 def edit_facility(facility_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Edits facility with id `facility_id` in database 
+    with data provided by website form
+    
+    Parameters
+    -------------------------------------------------
+     :param facility_id: int, id of facility to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page for 
+    the congregation corresponding to the facility
+    '''
     facility = db.get_facility_by_id(facility_id)
     congregation_name = db.get_congregation_by_id(facility["congregation_id"])['name']
     print(congregation_name)
@@ -345,12 +602,38 @@ def edit_facility(facility_id):
 @app.route("/delete_facility/<int:facility_id>", methods=["POST"])
 @login_required
 def delete_facility(facility_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes facility with id `facility_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param facility_id: int, id of facility to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
     db.delete_facility(facility_id)
     return redirect("/congregations")
 
 @app.route("/edit_addition/<int:addition_id>", methods=["GET", "POST"])
 @login_required
 def edit_addition(addition_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes addition with id `addition_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param addition_id: int, id of addition to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
     addition = db.get_addition_by_id(addition_id)
     congregation_name = db.get_congregation_by_id(addition["congregation_id"])['name']
     
@@ -379,6 +662,21 @@ def delete_addition(addition_id):
 @app.route("/edit_solar/<int:solar_pot_id>", methods=["GET", "POST"])
 @login_required
 def edit_solar(solar_pot_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Edits solar potential with id `solar_pot_id` in database 
+    with data provided by website form
+    
+    Parameters
+    -------------------------------------------------
+     :param solar_pot_id: int, id of solar potential to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page for 
+    the congregation corresponding to the solar potential
+    '''
     solar_pot = db.get_solar_by_id(solar_pot_id)
     congregation_name = db.get_congregation_by_id(solar_pot["congregation_id"])['name']
    
@@ -400,12 +698,40 @@ def edit_solar(solar_pot_id):
 @app.route("/delete_solar/<int:solar_pot_id>", methods=["POST"])
 @login_required
 def delete_solar(solar_pot_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes solar potential with id `solar_pot_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param solar_pot_id: int, id of solar potential to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
     db.delete_Solar_Potential(solar_pot_id)
     return redirect("/congregations")
 
 @app.route("/edit_climate_work/<int:climate_work_id>", methods=["GET", "POST"])
 @login_required
 def edit_climate_work(climate_work_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Edits climate work with id `climate_work_id` in database 
+    with data provided by website form
+    
+    Parameters
+    -------------------------------------------------
+     :param climate_work_id: int, id of climate work to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page for 
+    the congregation corresponding to the climate work
+    '''
     climate_work = db.get_climate_work_by_id(climate_work_id)
     congregation_name = db.get_congregation_by_id(climate_work["congregation_id"])['name']
    
@@ -431,9 +757,39 @@ def edit_climate_work(climate_work_id):
 @app.route("/delete_climate_work/<int:climate_work_id>", methods=["POST"])
 @login_required
 def delete_climate_work(climate_work_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes climate work with id `climate_work_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param climate_work_id: int, id of solar potential to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
     db.delete_Climate_Work(climate_work_id)
     return redirect("/congregations")
+@app.route("/delete_case_study/<int:case_study_id>", methods=["POST"])
+@login_required
+def delete_case_study(case_study_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes case study with id `congregation_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param case_study_id: int, id of case study to delete
 
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to case studies page 
+    '''
+    db.delete_case_study(case_study_id)
+    return redirect("/case_studies")
 UPLOAD_FOLDER = "/tmp"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -593,6 +949,22 @@ def how_contacts():
         selected_denomination=denomination,
         selected_sf_status=sf_status
     )
-
+@app.route("/case_studies")
+def how_case_studies():
+    cong_ids = db.get_all_case_study_cong_ids()
+    selected_id = request.args.get("id", type=int) # from dropdown selection
+    case_studies=[]
+    selected_congregation=None
+    if selected_id:
+        # Get detailed info from DB
+        case_studies=db.get_case_study_by_cong_id(selected_id)
+        print(case_studies)
+        selected_congregation=db.get_congregation_by_id(selected_id)
+    return render_template(
+        "case_studies.html",
+        congregations=cong_ids,
+        selected_congregation=selected_congregation,
+        case_studies=case_studies,
+    )
 if __name__ == "__main__":
     app.run(debug=True)

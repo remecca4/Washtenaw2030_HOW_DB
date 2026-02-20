@@ -116,6 +116,11 @@ nav a:hover {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+    width: 100%;               /* fill parent container */
+    display: flex;             /* flex layout for multiple images */
+    justify-content: center;   /* center images horizontally */
+    flex-direction: column;    /* stack vertically; use row if you want side-by-side */
+    align-items: center;
 }
 
 .button-row,
@@ -232,6 +237,21 @@ input, select {
     margin-bottom: 30px;
 }
 
+.case_study_img {
+    width: 100%;       /* takes full width of parent container */
+    height: auto;      /* keeps aspect ratio */
+    display: block;    /* needed for margin auto centering */
+    margin: 20px auto; /* centers image inside parent */
+    max-width: 700px; /* optional: limit so it doesn't explode */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.case_study_container {
+    max-width: 1200px;
+    max-height: 1200px;  /* controls overall size */
+    margin: 40px auto;   /* centers container horizontally */
+    text-align: center;
+}
 /* ----------- LINKS ----------- */
 .links {
     list-style: none;
@@ -276,6 +296,7 @@ input, select {
     <a href="/">Home</a>
     <a href="/congregations">View Congregations</a>
     <a href="/contacts">Congregation Contacts</a>
+    <a href="/case_studies">Case Studies</a>
     {% if current_user.is_authenticated %}
      <a href="/forms">Add Data</a>
     {% endif %}

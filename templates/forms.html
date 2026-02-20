@@ -116,28 +116,29 @@
 </div>
 
 <div class="form-box">
-<h2>Add Climate Work</h2>
-{% with upload_url=upload_climate_work_url %}
-    {% include "upload_csv.html" %}
-{% endwith %}
-{% for message in get_flashed_messages() %}
-    <p class="flash">{{ message }}</p>
-{% endfor %}
-<form action="/climate_work/add" method="POST">
-    <label>Congregation
-        <select name="congregation_id" required>
-            {% for cong in congregations %}
-                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label>Work Type <input type="text" name="work_type"></label>
-    <label>Start Date <input type="date" name="start_date"></label>
-    <label>End Date <input type="date" name="end_date"></label>
-    <label>Description <input type="text" name="description"></label>
-    <label>Impact <input type="text" name="impact"></label>
-    <button class="button" type="submit">Save Climate Work</button>
-</form>
+    <h2>Add Case Study</h2>
+
+    {% for message in get_flashed_messages() %}
+        <p class="flash">{{ message }}</p>
+    {% endfor %}
+
+    <form action="/case_study/add" method="POST" enctype="multipart/form-data">
+        <!-- Congregation dropdown -->
+        <label>Congregation
+            <select name="congregation_id" required>
+                {% for cong in congregations %}
+                    <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <!-- Image upload -->
+        <label>Upload Case Study Image
+            <input type="file" name="case_study_image" accept="image/*" required>
+        </label>
+
+        <button class="button" type="submit">Add Case Study</button>
+    </form>
 </div>
 
 {% endblock %}
