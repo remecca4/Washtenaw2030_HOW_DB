@@ -29,7 +29,7 @@
     {% if case_studies %}
     <div class="list-block">
         {% for cs in case_studies %}
-           <img src="{{ url_for('static', filename=cs.case_study_path) }}" 
+           <img src="{{ cs['case_study_path'] }}"
                 alt="Congregation" 
                 class="case_study_img">
             {% if current_user.is_authenticated %}

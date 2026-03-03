@@ -11,12 +11,20 @@ from parse_csv import parse_insert_additions_csv,parse_insert_climate_work_csv,p
 
 
 import os
+import cloudinary
+import cloudinary.uploader
+
+
 app = Flask(__name__)
 print(__name__)
 
 db = DatabaseManager()
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-key") 
-
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -454,15 +462,20 @@ def case_study_form():
     
     
     file = request.files.get("case_study_image")
+
     if not file or file.filename == "":
-        flash("No case study uploaded.")
-        return redirect(request.referrer)
+     flash("No case study uploaded.")
+     return redirect(request.referrer)
 
-    filename = secure_filename(file.filename)
-    path = os.path.join(app.static_folder, filename)
-    file.save(path)
+# Upload to Cloudinary
+    result = cloudinary.uploader.upload(file)
 
-    db.insert_case_study(congregation_id,filename)
+# The secure URL you store in DB
+    image_url = result["secure_url"]
+
+    db.insert_case_study(congregation_id, image_url)
+
+    flash("Case study uploaded!")
     return redirect(url_for("view_forms"))
     
 
