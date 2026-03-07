@@ -922,9 +922,9 @@ def upload_climate_work_csv():
 
 @app.route("/contacts")
 def how_contacts():
-    municipal = request.args.get("municipal")
-    denomination = request.args.get("denomination")
-    sf_status = request.args.get("sf_status")
+    municipal = request.args.get("municipal", "")
+    denomination = request.args.get("denomination", "")
+    sf_status = request.args.get("sf_status", "")
     # Base query
     query = "SELECT name, municipal_entity, denomination, email, phone_number, sf_member_status FROM congregations"
     conditions = []
