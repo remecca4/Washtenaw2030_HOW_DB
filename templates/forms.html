@@ -86,7 +86,7 @@
         </select>
     </label>
     <label>Addition Size (sq ft) <input type="number" name="addition_size"></label>
-    <label>Addition Date <input type="date" name="addition_date"></label>
+    <label>Addition Date <input type="date" name="addition_date" required></label>
     <button class="button" type="submit">Save Addition</button>
 </form>
 </div>
@@ -112,6 +112,30 @@
     <label>Savings ($) <input type="number" name="savings"></label>
     <label>CO₂ Savings <input type="number" name="co2_savings"></label>
     <button class="button" type="submit">Save Solar Potential</button>
+</form>
+</div>
+<div class="form-box">
+<h2>Add Climate Work</h2>
+{% with upload_url=upload_climate_work_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/climate_work/add" method="POST">
+    <label>Congregation
+        <select name="congregation_id" required>
+            {% for cong in congregations %}
+                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Work Type <input type="text" name="work_type"></label>
+    <label>Start Date <input type="date" name="start_date" required></label>
+    <label>End Date <input type="date" name="end_date" required></label>
+    <label>Description <input type="text" name="description"></label>
+    <label>Impact <input type="text" name="impact"></label>
+    <button class="button" type="submit">Save Climate Work</button>
 </form>
 </div>
 
