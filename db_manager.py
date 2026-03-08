@@ -139,11 +139,11 @@ class DatabaseManager:
         '''
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
-       
+        
         try:
             cursor.execute("""
             INSERT INTO congregations (name, address,municipal_entity, denomination, size, email,phone_number,website,sf_member_status)
-            VALUES (%s, %s, %s,%s, %s, %s,%s,%s);
+            VALUES (%s, %s, %s,%s, %s, %s, %s, %s, %s);
         """, (name, address,municipal_entity, denomination, size, email,phone_number,website,sf_member_status))
             conn.commit()
         except psycopg2.Error as e:

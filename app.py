@@ -809,6 +809,15 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @app.post("/upload/congregations")
 @login_required
 def upload_congregations_csv():
+    '''
+    Summary
+    ------------------------------------------------
+    Uploads data formated in a csv to the congregations table
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to add data page
+    '''
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
@@ -832,6 +841,15 @@ def upload_congregations_csv():
 @app.route("/upload/facilities")
 @login_required
 def upload_facilities_csv():
+    '''
+    Summary
+    ------------------------------------------------
+    Uploads data formated in a csv to the facilities table
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to add data page
+    '''
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
@@ -855,6 +873,15 @@ def upload_facilities_csv():
 @app.post("/upload/additions")
 @login_required
 def upload_additions_csv():
+    '''
+    Summary
+    ------------------------------------------------
+    Uploads data formated in a csv to the additions table
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to add data page
+    '''
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
@@ -878,6 +905,15 @@ def upload_additions_csv():
 @app.post("/upload/solar")
 @login_required
 def upload_solar_csv():
+    '''
+    Summary
+    ------------------------------------------------
+    Uploads data formated in a csv to the solar potential table
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to add data page
+    '''
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
@@ -901,6 +937,15 @@ def upload_solar_csv():
 @app.post("/upload/climate_work")
 @login_required
 def upload_climate_work_csv():
+    '''
+    Summary
+    ------------------------------------------------
+    Uploads data formated in a csv to the climate work table
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to add data page
+    '''
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
@@ -922,6 +967,16 @@ def upload_climate_work_csv():
 
 @app.route("/contacts")
 def how_contacts():
+    '''
+    Summary
+    ------------------------------------------------
+    Displays HOW contacts filtered by municipal entity,
+    denomination, and sf_status
+
+    Returns
+    ---------------------------------------------------
+    Render Template to contacts.html 
+    '''
     municipal = request.args.get("municipal", "")
     denomination = request.args.get("denomination", "")
     sf_status = request.args.get("sf_status", "")
@@ -964,6 +1019,15 @@ def how_contacts():
     )
 @app.route("/case_studies")
 def how_case_studies():
+    '''
+    Summary
+    ------------------------------------------------
+    Displays case studies for the selected congregation
+
+    Returns
+    ---------------------------------------------------
+    Render Template to case_studies.html 
+    '''
     cong_ids = db.get_all_case_study_cong_ids()
     selected_id = request.args.get("id", type=int) # from dropdown selection
     case_studies=[]
@@ -980,4 +1044,4 @@ def how_case_studies():
         case_studies=case_studies,
     )
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
