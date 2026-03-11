@@ -6,7 +6,7 @@ from flask_bcrypt import Bcrypt
 from functools import wraps
 from db_manager import DatabaseManager
 from werkzeug.utils import secure_filename
-from parse_csv import parse_insert_additions_csv,parse_insert_climate_work_csv,parse_insert_congregation_csv,parse_insert_facilities_csv,parse_insert_solar_csv
+from parse_csv import parse_insert_additions_csv,parse_insert_climate_work_csv,parse_insert_congregation_csv,parse_insert_facilities_csv,parse_insert_solar_csv,parse_insert_contacts_csv
 
 
 
@@ -335,13 +335,33 @@ def congregation_form():
     denomination = request.form.get("denomination")
     size = request.form.get("size")
     size = int(size) if size and size.isdigit() else None
-    email = request.form.get("email")
-    phone_number = request.form.get("phone_number")
     website = request.form.get("website") or None
     sf_member_status=request.form.get("sf_member_status") or None
-    db.insert_congregation(name, address, municipal_entity, denomination, size, email, phone_number, website,sf_member_status)
+    db.insert_congregation(name, address, municipal_entity, denomination, size, website,sf_member_status)
     return redirect(url_for("view_forms"))
 
+@app.route("/contact/add", methods=["POST"])
+@login_required
+def contacts_form():
+    '''
+    Summary
+    -----------------------------------------------
+    Gets data from contacts form and inserts it 
+    into the contacts table in the database
+
+    Returns
+    ----------------------------------------------
+    Redirect Response Object to view forms 
+
+    '''
+    congregation_id = int(request.form["congregation_id"])  
+    name = request.form.get("name")
+    role = request.form.get("role")
+    email = request.form.get("email")
+    phone_number = request.form.get("phone_number")
+    print("tis the db's prob")
+    db.insert_contact(congregation_id, name,role,email,phone_number)
+    return redirect(url_for("view_forms"))
 
 @app.route("/facility/add", methods=["POST"])
 @login_required
@@ -478,7 +498,6 @@ def case_study_form():
     flash("Case study uploaded!")
     return redirect(url_for("view_forms"))
     
-
 @app.route("/congregations", methods=["GET"])
 def view_congregations():
     '''
@@ -496,6 +515,7 @@ def view_congregations():
     congregations = db.get_all_congregations()
     selected_id = request.args.get("id", type=int) # from dropdown selection
     selected_congregation = None
+    contacts=[]
     facilities = []
     additions = []
     solar = []
@@ -505,6 +525,7 @@ def view_congregations():
         # Get detailed info from DB
         selected_congregation = db.get_congregation_by_id(selected_id)
         print(selected_congregation)
+        contacts=db.get_contacts_by_congregation(selected_id)
         facilities = db.get_facilities_by_congregation(selected_id)
         additions = db.get_additions_by_congregation(selected_id)
         solar = db.get_solar_by_congregation(selected_id)
@@ -514,6 +535,7 @@ def view_congregations():
         "congregations.html",
         congregations=congregations,
         selected_congregation=selected_congregation,
+        contacts=contacts,
         facilities=facilities,
         additions=additions,
         solar=solar,
@@ -545,8 +567,6 @@ def edit_congregation(cong_id):
             "municipal_entity": request.form["municipal_entity"],
             "denomination": request.form["denomination"],
             "size": request.form["size"],
-            "email": request.form["email"],
-            "phone_number": request.form["phone_number"],
             "website": request.form["website"],
             "sf_member_status":request.form["sf_member_status"]
         }
@@ -573,6 +593,60 @@ def delete_congregation(cong_id):
     Redirect Response Object to view congregation page 
     '''
     db.delete_congregation(cong_id)
+    return redirect("/congregations")
+
+@app.route("/edit_contact/<int:contact_id>", methods=["GET", "POST"])
+@login_required
+def edit_contact(contact_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Edits contact with id `contact_id` in database 
+    with data provided by website form
+    
+    Parameters
+    -------------------------------------------------
+     :param contact_id: int, id of contact to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page for 
+    the congregation corresponding to the contact
+    '''
+    contact = db.get_contact_by_id(contact_id)
+    congregation_name = db.get_congregation_by_id(contact["congregation_id"])['name']
+    print(congregation_name)
+    if request.method == "POST":
+        data={
+          "name": request.form["name"],
+            "role": request.form["role"],
+            "email": request.form["email"],
+            "phone_number": request.form["phone_number"]
+        }
+        db.update_contact(contact_id,data)
+        return redirect(f"/congregations?id={contact['congregation_id']}")
+
+    return render_template("edit_contact.html",
+                           contact=contact,
+                           congregation_name=congregation_name)
+
+@app.route("/delete_contact/<int:contact_id>", methods=["POST"])
+@login_required
+def delete_contact(contact_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes contact with id `contact_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param contact_id: int, id of contact to delete
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
+    db.delete_contact(contact_id)
     return redirect("/congregations")
 
 @app.route("/edit_facility/<int:facility_id>", methods=["GET", "POST"])
@@ -838,6 +912,37 @@ def upload_congregations_csv():
     flash("Congregations CSV Imported!.")
     return redirect(request.referrer)
 
+@app.route("/upload/contacts")
+@login_required
+def upload_contacts_csv():
+    '''
+    Summary
+    ------------------------------------------------
+    Uploads data formated in a csv to the contacts table
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to add data page
+    '''
+    file = request.files.get("csv_file")
+    if not file or file.filename == "":
+        flash("No file uploaded.")
+        return redirect(request.referrer)
+
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
+    file.save(path)
+
+    # Run heavy work outside the request
+    threading.Thread(
+        target=parse_insert_contacts_csv,
+        args=(path,),
+        daemon=True
+    ).start()
+    
+    flash("Contacts CSV imported!")
+    return redirect(request.referrer)
 @app.route("/upload/facilities")
 @login_required
 def upload_facilities_csv():
@@ -981,7 +1086,7 @@ def how_contacts():
     denomination = request.args.get("denomination", "")
     sf_status = request.args.get("sf_status", "")
     # Base query
-    query = "SELECT name, municipal_entity, denomination, email, phone_number, sf_member_status FROM congregations"
+    query = "SELECT name, municipal_entity, denomination, sf_member_status FROM congregations"
     conditions = []
     params = []
 
@@ -1044,4 +1149,4 @@ def how_case_studies():
         case_studies=case_studies,
     )
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

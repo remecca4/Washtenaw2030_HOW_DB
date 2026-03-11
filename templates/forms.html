@@ -23,8 +23,6 @@
     <label>Municipal Entity <input type="text" name="municipal_entity"></label>
     <label>Denomination <input type="text" name="denomination"></label>
     <label>Size (sq ft) <input type="number" name="size"></label>
-    <label>Email <input type="text" name="email"></label>
-    <label>Phone Number <input type="text" name="phone_number"></label>
     <label>Website <input type="text" name="website"></label>
    <label>
   Solar Faithful Member Status
@@ -40,6 +38,31 @@
 
 </div>
 {% endif %}
+<div class="form-box">
+<h2>Add Contact</h2>
+{% with upload_url=upload_contacts_url %}
+    {% include "upload_csv.html" %}
+{% endwith %}
+{% for message in get_flashed_messages() %}
+    <p class="flash">{{ message }}</p>
+{% endfor %}
+<form action="/contact/add" method="POST">
+    <label>Congregation
+        <select name="congregation_id" required>
+            <option value="">-- Select Congregation --</option>
+            {% for cong in congregations %}
+                <option value="{{ cong['congregation_id'] }}">{{ cong['name'] }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Name <input type="text" name="name"></label>
+    <label>Role <input type="text" name="role"></label>
+    <label>Email <input type="text" name="email"></label>
+    <label>Phone Number <input type="text" name="phone_number"></label>
+    <button class="button" type="submit">Save Contact</button>
+</form>
+
+</div>
 <div class="form-box">
 <h2>Add Facility</h2>
 {% with upload_url=upload_facilities_url %}

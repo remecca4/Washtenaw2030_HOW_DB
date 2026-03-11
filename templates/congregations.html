@@ -36,8 +36,6 @@
         <p><strong>Municipal Entity:</strong> {{ selected_congregation.municipal_entity }}</p>
         <p><strong>Denomination:</strong> {{ selected_congregation.denomination }}</p>
         <p><strong>Size:</strong> {{ selected_congregation.size }}</p>
-        <p><strong>Email:</strong> {{ selected_congregation.email }}</p>
-        <p><strong>Phone:</strong> {{ selected_congregation.phone_number }}</p>
         {% if selected_congregation.website %}
         <p><strong>Website:</strong> 
             <a href="{{ selected_congregation.website }}" target="_blank">{{ selected_congregation.website }}</a>
@@ -53,7 +51,36 @@
     <button type="submit" class="button" onclick="return confirm('Delete this congregation?')">Delete</button>
     </form>
     {% endif %}
-    <!-- Facilities -->
+    <!-- Contacts -->
+<h3 class="section-title">Contacts</h3>
+{% if contacts %}
+    <div class="list-block">
+        {% for c in contacts %}
+        <div class="entry-block">
+            <div class="mini-card">
+                <p><strong>Name:</strong> {{ c.name }}</p>
+                <p><strong>Role:</strong> {{ c.role }}</p>
+                <p><strong>Email:</strong> {{ c.email }}</p>
+                <p><strong>Phone Number:</strong> {{ c.phone_number }}</p>
+            </div>
+            {% if current_user.is_authenticated %}
+            <div class="button-row">
+                <form method="GET" action="/edit_contact/{{ c.contact_id }}">
+                    <button class="button" type="submit">Edit</button>
+                </form>
+                <form method="POST" action="/delete_contact/{{ c.contact_id }}">
+                    <button type="submit" class="button" onclick="return confirm('Delete this contact?')">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-text">No contacts recorded.</p>
+{% endif %}
+
+ <!-- Facilities -->
 <h3 class="section-title">Facilities</h3>
 {% if facilities %}
     <div class="list-block">
@@ -83,8 +110,6 @@
 {% else %}
     <p class="empty-text">No facilities recorded.</p>
 {% endif %}
-
-
 <!-- Building Additions -->
 <h3 class="section-title">Building Additions</h3>
 {% if additions %}

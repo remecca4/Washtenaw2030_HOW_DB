@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Contact{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="title">Edit Contact</h1>
+
+    <form method="POST" action="" class="edit-form">
+
+        <!-- READ ONLY: congregation name -->
+        <label for="congregation_display">Congregation:</label>
+        <input type="text" id="congregation_display" 
+               value="{{ congregation_name }}" 
+               disabled>
+
+        <!-- NAME -->
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" 
+               value="{{ contact['name'] }}" required>
+
+        <!-- ROLE -->
+        <label for="role">Role:</label>
+        <input type="text" id="role" name="role" 
+               value="{{ contact['role'] }}">
+
+        <!-- EMAIL -->
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email" 
+               value="{{ contact['email'] }}">
+
+        <!-- PHONE NUMBER -->
+        <label for="phone_number">Phone_Number:</label>
+        <input type="text" id="phone_number" name="phone_number" 
+               value="{{ contact['phone_number'] }}">
+
+        <div class="button-group">
+            <button type="submit" class="button">Save Changes</button>
+            <a href="/congregations?id={{ contact['congregation_id'] }}" class="button button-reject">Cancel</a>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}

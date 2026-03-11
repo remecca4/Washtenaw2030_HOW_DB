@@ -34,10 +34,19 @@ class DatabaseManager:
         municipal_entity TEXT, -- eg. Ann Arbor, Chelsea, etc.
         denomination TEXT,
         size INTEGER DEFAULT 0,  -- amount of people in the HOW
-        email TEXT,  
-        phone_number TEXT,
         website TEXT,
         sf_member_status TEXT CHECK (sf_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member'))
+       );"""
+        cursor.execute(cong_table_script)
+        cong_table_script="""
+        -- Table to store basic info about houses of worship
+        CREATE TABLE IF NOT EXISTS contacts (
+        contact_id SERIAL PRIMARY KEY,
+        congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
+        name TEXT NOT NULL UNIQUE,
+        role TEXT,
+        email TEXT,  
+        phone_number TEXT
        );"""
         cursor.execute(cong_table_script)
         facility_table_script="""
@@ -118,7 +127,7 @@ class DatabaseManager:
         print("CLEAR TABLES")
         conn.close()
 
-    def insert_congregation(self, name,address, municipal_entity, denomination, size, email,phone_number,website,sf_member_status="Unknown"):
+    def insert_congregation(self, name,address, municipal_entity, denomination, size,website,sf_member_status="Unknown"):
         '''
         Inserts a congregation into the congregations table
         ------------------------------------------------------------
@@ -129,8 +138,6 @@ class DatabaseManager:
         municipal entity: string
         denomination: string, religous denomination of congregation
         size: integer
-        email: string, congregation's email
-        phone_number: string, congregation's phone number
         website: string, url of congregation's website
         --------------------------------------------------
         Returns
@@ -142,14 +149,42 @@ class DatabaseManager:
         
         try:
             cursor.execute("""
-            INSERT INTO congregations (name, address,municipal_entity, denomination, size, email,phone_number,website,sf_member_status)
-            VALUES (%s, %s, %s,%s, %s, %s, %s, %s, %s);
-        """, (name, address,municipal_entity, denomination, size, email,phone_number,website,sf_member_status))
+            INSERT INTO congregations (name, address,municipal_entity, denomination, size,website,sf_member_status)
+            VALUES (%s, %s, %s,%s, %s, %s, %s);
+        """, (name, address,municipal_entity, denomination, size, website,sf_member_status))
             conn.commit()
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
         conn.close()
+    
+    def insert_contact(self, congregation_id,name,role,email,phone_number):
+        '''
+        Inserts a contact into the contacts table
+        ------------------------------------------------------------
+        Parameters
+        ------------------------------------------------------------
+        congregation_id: int, id of congregation from congregations table
+        name: string, name of contact
+        email: string, contact's email
+        phone_number: string, contact's phone number
+        --------------------------------------------------
+        Returns
+        --------------------------------------------------
+        int, last row id
+        '''
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cursor = conn.cursor()
         
+        try:
+            cursor.execute("""
+            INSERT INTO Contacts (congregation_id, name, role, email,phone_number)
+            VALUES (%s, %s, %s,%s,%s);
+        """, (congregation_id, name, role,email,phone_number))
+            conn.commit()
+        except psycopg2.Error as e:
+            print(f"An error occurred: {e}")
+        conn.close()    
+    
     def insert_facility(self, congregation_id,facility_size, age,heating_sys, vent_sys, ac_sys,est_electric_bill=None):
         '''
         Inserts a facility into the facilities table
@@ -306,6 +341,7 @@ class DatabaseManager:
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
         conn.close()
+    
     def insert_case_study(self, congregation_id,case_study_path):
         '''
         Summary
@@ -337,7 +373,7 @@ class DatabaseManager:
     def get_congregation_by_id(self,congregation_id):
       query = """
         SELECT  congregation_id, name, address, 
-               municipal_entity,denomination, size, email,phone_number,website, sf_member_status 
+               municipal_entity,denomination, size ,website, sf_member_status 
         FROM congregations
         WHERE congregation_id = %s
       """
@@ -354,12 +390,19 @@ class DatabaseManager:
             "municipal_entity": rows[0][3],
             "denomination": rows[0][4],
             "size": rows[0][5],
-            "email": rows[0][6],
-            "phone_number": rows[0][7],
-            "website": rows[0][8],
-            "sf_member_status": rows[0][9]
+            "website": rows[0][6],
+            "sf_member_status": rows[0][7]
         }
       return congs  
+    
+    def get_congregation_id(self,congregation_name):
+     query="SELECT congregation_id FROM Congregations WHERE name = ?"
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
+     cursor = conn.cursor()
+     cursor.execute(query, (congregation_name,))
+     id = cursor.fetchone()[0]
+     return id
+    
     def get_case_study_by_cong_id(self,congregation_id):
       query = """
         SELECT  case_study_id, congregation_id, case_study_path
@@ -380,6 +423,31 @@ class DatabaseManager:
             "case_study_path": row[2],
         })
       return cs
+    
+    def get_contact_by_id(self, contact_id):
+      query = """
+        SELECT contact_id, congregation_id, name, role, email, phone_number
+        FROM contacts
+        WHERE contact_id = %s
+      """
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
+      cursor.execute(query, (contact_id,))
+      row = cursor.fetchone()
+     
+      
+      contact ={
+            "contact_id": row[0],
+            "congregation_id": row[1],
+            "name": row[2],
+            "role": row[3],
+            "email": row[4],
+            "phone_number": row[5],
+        }
+
+      return contact
+    
+    
     def get_facility_by_id(self, facility_id):
       query = """
         SELECT facility_id, congregation_id, facility_size, age, 
@@ -476,6 +544,32 @@ class DatabaseManager:
         }
 
       return work
+    
+    def get_contacts_by_congregation(self, congregation_id):
+      query = """
+        SELECT contact_id, congregation_id, name, role, email, 
+               phone_number
+        FROM contacts
+        WHERE congregation_id = %s
+      """
+      conn = psycopg2.connect(os.environ["DATABASE_URL"])
+      cursor = conn.cursor()
+      cursor.execute(query, (congregation_id,))
+      rows = cursor.fetchall()
+     
+      
+      contacts = []
+      for row in rows:
+        contacts.append({
+            "contact_id": row[0],
+            "congregation_id": row[1],
+            "name": row[2],
+            "role": row[3],
+            "email": row[4],
+            "phone_number": row[5],
+        })
+
+      return contacts
     
     def get_facilities_by_congregation(self, congregation_id):
       query = """
@@ -588,14 +682,32 @@ class DatabaseManager:
      query = """
         UPDATE congregations
         SET name = %s, address = %s, municipal_entity = %s, denomination = %s,
-            size = %s, email = %s, phone_number = %s, website = %s, sf_member_status=%s
+            size = %s, website = %s, sf_member_status=%s
         WHERE congregation_id = %s
      """
      print(data)
      values = (
         data["name"], data["address"], data["municipal_entity"],
-        data["denomination"], data["size"], data["email"],
-        data["phone_number"], data["website"], data["sf_member_status"], cong_id
+        data["denomination"], data["size"], data["website"], data["sf_member_status"], cong_id
+    )
+
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
+     cur = conn.cursor()
+     cur.execute(query, values)
+     conn.commit()
+     conn.close()
+    
+    def update_contact(self, contact_id, data):
+        
+     query = """
+        UPDATE contacts
+        SET name= %s, role = %s, email= %s, phone_number = %s
+        WHERE contact_id = %s
+     """
+     
+     values = (
+        data["name"], data["role"], data["email"],
+        data["phone_number"], contact_id
     )
 
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
@@ -710,6 +822,7 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
+   
     def delete_congregation(self, cong_id):
      
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
@@ -727,6 +840,13 @@ class DatabaseManager:
      finally:
         conn.close()
     
+    def delete_contact(self, contact_id):
+     conn = psycopg2.connect(os.environ["DATABASE_URL"])
+     cur = conn.cursor()
+     cur.execute("DELETE FROM contacts WHERE contact_id = %s", (contact_id,))
+     conn.commit()
+     conn.close()
+
     def delete_facility(self, facility_id):
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
@@ -778,6 +898,7 @@ class DatabaseManager:
 
      finally:
         conn.close()
+    
     def drop_table(self,table_name):
         '''
         removes a table from the database
@@ -800,6 +921,7 @@ class DatabaseManager:
         rows = cursor.fetchall()
         # Convert to list of dicts 
         return [{"congregation_id": row[0],"name": row[1]} for row in rows]
+    
     def get_all_case_study_cong_ids(self):
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
@@ -864,7 +986,6 @@ class DatabaseManager:
      conn.close()
      return row
      
-    
     def fetchall(self, query, params=()):
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()

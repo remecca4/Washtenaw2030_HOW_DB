@@ -24,8 +24,6 @@ def parse_insert_congregation_csv(csv_file):
             size_raw = row.get('Size', '').strip()
             size = int(size_raw) if size_raw.isdigit() else None
 
-            email = row.get('Email', '').strip() or None
-            phone_number = row.get('Phone Number', '').strip() or None
 
             website_raw = row.get('Website', '').strip().lower()
 
@@ -37,15 +35,26 @@ def parse_insert_congregation_csv(csv_file):
                 else:
                     website = row.get('Website').strip()
 
-            db.insert_congregation(name, address, municipal_entity, denomination, size, email, phone_number, website)
+            db.insert_congregation(name, address, municipal_entity, denomination, size, website)
 
+def parse_insert_contacts_csv(csv_file):
+    with open(csv_file, newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = row.get('Congregation', '').strip() or None
+            id=db.get_congregation_id(name)
+            role = row.get('Role', '').strip()
+            email = row.get('Email', '').strip()
+            phone_number= row.get('Phone Number', '').strip() or None
+
+            db.insert_contact(id, role, phone_number, email)
 
 def parse_insert_facilities_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             name = row.get('Congregation', '').strip() or None
-
+            id=db.get_congregation_id(name)
             facility_size = row.get('Facility size', '').strip()
             facility_size = int(facility_size) if facility_size.isdigit() else None
 
@@ -56,7 +65,7 @@ def parse_insert_facilities_csv(csv_file):
             vent_system = row.get('Vent System', '').strip() or None
             ac_system = row.get('AC System', '').strip() or None
 
-            db.insert_facility(name, facility_size, age, heat_system, vent_system, ac_system)
+            db.insert_facility(id, facility_size, age, heat_system, vent_system, ac_system)
 
 
 def parse_insert_additions_csv(csv_file):
@@ -64,13 +73,14 @@ def parse_insert_additions_csv(csv_file):
         reader = csv.DictReader(f)
         for row in reader:
             name = row.get('Congregation', '').strip() or None
+            id=db.get_congregation_id(name)
 
             addition_size = row.get('Addition size', '').strip()
             addition_size = int(addition_size) if addition_size.isdigit() else None
 
             addition_date = safe_date(row.get('Addition date'))
 
-            db.insert_addition(name, addition_size, addition_date)
+            db.insert_addition(id, addition_size, addition_date)
 
 
 def parse_insert_solar_csv(csv_file):
@@ -78,6 +88,7 @@ def parse_insert_solar_csv(csv_file):
         reader = csv.DictReader(f)
         for row in reader:
             name = row.get('Congregation', '').strip() or None
+            id=db.get_congregation_id(name)
 
             usable_sunlight = row.get('Usable Sunlight', '').strip()
             usable_sunlight = int(usable_sunlight) if usable_sunlight.isdigit() else None
@@ -91,14 +102,15 @@ def parse_insert_solar_csv(csv_file):
             co2_savings = row.get('CO2 Savings', '').strip()
             co2_savings = int(co2_savings) if co2_savings.isdigit() else None
 
-            db.insert_solar_potential(name, usable_sunlight, solar_panel_space, savings, co2_savings)
+            db.insert_solar_potential(id, usable_sunlight, solar_panel_space, savings, co2_savings)
 
 
 def parse_insert_climate_work_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip()
+            name = row.get('Congregation', '').strip() or None
+            id=db.get_congregation_id(name)
 
             work_type = row.get('Work Type', '').strip()
 
@@ -108,7 +120,7 @@ def parse_insert_climate_work_csv(csv_file):
             description = row.get('Description', '').strip() or None
             impact = row.get('Impact', '').strip() or None
 
-            db.insert_climate_work(name, work_type, start_date, end_date, description, impact)
+            db.insert_climate_work(id, work_type, start_date, end_date, description, impact)
 
 
 if __name__ == "__main__":
