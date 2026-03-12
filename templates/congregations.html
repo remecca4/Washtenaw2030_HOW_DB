@@ -3,33 +3,20 @@
 
 {% block content %}
 
-<div class="container">
-    <h1 class="title">View Congregations</h1>
 
-    <!-- Dropdown -->
-    <form method="GET" action="/congregations" class="dropdown-form">
-        <label for="cong-select">Choose a congregation:</label>
-        <select id="cong-select" name="id" required>
-            <option value="">-- Select --</option>
-            {% for c in congregations %}
-                <option value="{{ c.congregation_id }}"
-                    {% if selected_congregation and c.congregation_id == selected_congregation.congregation_id %}
-                        selected
-                    {% endif %}
-                >{{ c.name }}</option>
-            {% endfor %}
-        </select>
 
-        <button class="button", type="submit">View</button>
-    </form>
-</div>
 
 
 {% if selected_congregation %}
-<div class="container details-container">
 
+    <div class="back-button-container">
+    <a href="/filter_congs">
+        <button class="button">← Back </button>
+    </a>
+    </div>
     <!-- Congregation Header -->
-    <h2 class="section-title">{{ selected_congregation.name }}</h2>
+    <h2 class="title">{{ selected_congregation.name }}</h2>
+    
     
     <div class="info-card">
         <p><strong>Address:</strong> {{ selected_congregation.address }}</p>

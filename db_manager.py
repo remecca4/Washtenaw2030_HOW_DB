@@ -43,7 +43,7 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS contacts (
         contact_id SERIAL PRIMARY KEY,
         congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
-        name TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
         role TEXT,
         email TEXT,  
         phone_number TEXT
@@ -395,14 +395,21 @@ class DatabaseManager:
         }
       return congs  
     
-    def get_congregation_id(self,congregation_name):
-     query="SELECT congregation_id FROM Congregations WHERE name = ?"
-     conn = psycopg2.connect(os.environ["DATABASE_URL"])
-     cursor = conn.cursor()
-     cursor.execute(query, (congregation_name,))
-     id = cursor.fetchone()[0]
-     return id
-    
+    def get_congregation_id(self, congregation_name):
+     if not congregation_name:
+        raise ValueError("congregation_name cannot be empty or None")
+
+     query = "SELECT congregation_id FROM congregations WHERE name = %s"
+
+    # Use a context manager to auto-close connection/cursor
+     with psycopg2.connect(os.environ["DATABASE_URL"]) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, (congregation_name,))
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+            else:
+                raise ValueError(f"No congregation found with name '{congregation_name}'")
     def get_case_study_by_cong_id(self,congregation_id):
       query = """
         SELECT  case_study_id, congregation_id, case_study_path

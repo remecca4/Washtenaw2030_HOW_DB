@@ -311,7 +311,12 @@ def view_forms():
     return render_template(
         "forms.html",
         congregations=congregations,
-        upload_congregations_url=url_for("upload_congregations_csv")  
+        upload_congregations_url=url_for("upload_congregations_csv"),
+        upload_contacts_url=url_for("upload_contacts_csv"),      
+        upload_facilities_url=url_for("upload_facilities_csv"),
+        upload_additions_url=url_for("upload_additions_csv"),      
+        upload_solar_url=url_for("upload_solar_csv"),
+        upload_climate_work_url=url_for("upload_climate_work_csv")
     )
 
 
@@ -912,7 +917,7 @@ def upload_congregations_csv():
     flash("Congregations CSV Imported!.")
     return redirect(request.referrer)
 
-@app.route("/upload/contacts")
+@app.post("/upload/contacts")
 @login_required
 def upload_contacts_csv():
     '''
@@ -943,7 +948,7 @@ def upload_contacts_csv():
     
     flash("Contacts CSV imported!")
     return redirect(request.referrer)
-@app.route("/upload/facilities")
+@app.post("/upload/facilities")
 @login_required
 def upload_facilities_csv():
     '''
@@ -1070,8 +1075,8 @@ def upload_climate_work_csv():
     flash("Climate Work CSV imported!")
     return redirect(request.referrer)
 
-@app.route("/contacts")
-def how_contacts():
+@app.route("/filter_congs")
+def filter_congs():
     '''
     Summary
     ------------------------------------------------
@@ -1080,13 +1085,14 @@ def how_contacts():
 
     Returns
     ---------------------------------------------------
-    Render Template to contacts.html 
+    Render Template to filter_congs.html 
     '''
     municipal = request.args.get("municipal", "")
     denomination = request.args.get("denomination", "")
     sf_status = request.args.get("sf_status", "")
+    search_query = request.args.get("search", "").strip()
     # Base query
-    query = "SELECT name, municipal_entity, denomination, sf_member_status FROM congregations"
+    query = "SELECT congregation_id, name, municipal_entity, denomination, sf_member_status FROM congregations"
     conditions = []
     params = []
 
@@ -1100,9 +1106,12 @@ def how_contacts():
     if sf_status:
       conditions.append("sf_member_status = %s")
       params.append(sf_status)
+    if search_query:
+      conditions.append( "name ILIKE %s")
+      params.append(f"%{search_query}%")
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
-    
+   
     query += " ORDER BY name"
 
     # Fetch HOWs
@@ -1113,14 +1122,15 @@ def how_contacts():
     denomination_options = [row[0] for row in db.fetchall("SELECT DISTINCT denomination FROM congregations ORDER BY denomination")]
     sf_options = [row[0] for row in db.fetchall("SELECT DISTINCT sf_member_status FROM congregations ORDER BY sf_member_status")]
     return render_template(
-        "contacts.html",
+        "filter_congs.html",
         hows=congregations,
         municipal_options=municipal_options,
         denomination_options=denomination_options,
         sf_options=sf_options,
         selected_municipal=municipal,
         selected_denomination=denomination,
-        selected_sf_status=sf_status
+        selected_sf_status=sf_status,
+        search_query=search_query
     )
 @app.route("/case_studies")
 def how_case_studies():

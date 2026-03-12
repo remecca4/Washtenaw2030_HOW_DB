@@ -41,13 +41,14 @@ def parse_insert_contacts_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip() or None
-            id=db.get_congregation_id(name)
-            role = row.get('Role', '').strip()
-            email = row.get('Email', '').strip()
+            cong_name = row.get('Congregation', '').strip()
+            id=db.get_congregation_id(cong_name)
+            name=row.get('Name', '').strip() or None
+            role = row.get('Role', '').strip() or None
+            email = row.get('Email', '').strip() or None
             phone_number= row.get('Phone Number', '').strip() or None
 
-            db.insert_contact(id, role, phone_number, email)
+            db.insert_contact(id, name,role, phone_number, email)
 
 def parse_insert_facilities_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:

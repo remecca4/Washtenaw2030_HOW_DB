@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}HOW Contacts{% endblock %}
+{% block title %}Filter Congregations{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width:1200px; margin:auto;">
-    <h1 class="title">HOW Contact List</h1>
+    <h1 class="title">Congregations List</h1>
 
     <!-- Filter Form -->
-    <form method="GET" action="/contacts" class="filter-form" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
+    <form method="GET" action="/filter_congs" class="filter-form" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
         <div>
             <label for="municipal-select">Municipal Entity:</label>
             <select name="municipal" id="municipal-select">
@@ -36,7 +36,10 @@
                 {% endfor %}
             </select>
         </div>
-
+         <div>
+        <label for="search-input">Search by Name:</label>
+        <input type="text" id="search-input" name="search" placeholder="Enter congregation name..." value="{{ search_query|default('') }}">
+    </div>
         <div>
             <button type="submit" class="button">Filter</button>
         </div>
@@ -44,30 +47,15 @@
 
     <!-- Contacts Table -->
     {% if hows %}
-    <div style="overflow-x:auto; margin-top:1rem;">
-        <table class="table" style="width:100%; min-width:900px;">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Municipal Entity</th>
-                    <th>Denomination</th>
-                    <th>SF Member Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for h in hows %}
-                <tr>
-                    <td>{{ h[0] }}</td>
-                    <td>{{ h[1] }}</td>
-                    <td>{{ h[2] }}</td>
-                    <td>{{ h[3] }}</td>
-                    <td>{{ h[4] }}</td>
-                    <td>{{ h[5] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% for h in hows %}
+      <div class="card">
+        <a href="/congregations?id={{ h[0] }}" class="card-title">{{ h[1] }}</a>
+        <p><strong>Municipal:</strong> {{ h[2] }}</p>
+        <p><strong>Denomination:</strong> {{ h[3] }}</p>
+        <p><strong>SF Status:</strong> {{ h[4] }}</p>
     </div>
+{% endfor %}
+</div>
     {% else %}
         <p class="empty-text">No HOW contacts found for selected filters.</p>
     {% endif %}
