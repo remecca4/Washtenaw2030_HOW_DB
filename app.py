@@ -1132,6 +1132,80 @@ def filter_congs():
         selected_sf_status=sf_status,
         search_query=search_query
     )
+@app.route("/contacts")
+def how_contacts():
+    municipal = request.args.get("municipal", "")
+    denomination = request.args.get("denomination", "")
+    sf_status = request.args.get("sf_status", "")
+    contact_name = request.args.get("contact_name", "")
+    cong_name= request.args.get("cong_name", "")
+
+    query = """
+        SELECT 
+            c.name,
+            g.municipal_entity,
+            g.denomination,
+            c.email,
+            c.phone_number,
+            g.sf_member_status,
+            c.role,
+            g.name
+        FROM contacts c
+        JOIN congregations g ON c.congregation_id = g.congregation_id
+    """
+
+    conditions = []
+    params = []
+
+    if municipal:
+        conditions.append("g.municipal_entity = %s")
+        params.append(municipal)
+
+    if denomination:
+        conditions.append("g.denomination = %s")
+        params.append(denomination)
+
+    if sf_status:
+        conditions.append("g.sf_member_status = %s")
+        params.append(sf_status)
+
+    if contact_name:
+        conditions.append("c.name ILIKE %s")
+        params.append(f"%{contact_name}%")
+    if cong_name:
+        conditions.append("g.name ILIKE %s")
+        params.append(f"%{cong_name}%")
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY g.name"
+
+    contacts = db.fetchall(query, params)
+
+    municipal_options = [row[0] for row in db.fetchall(
+        "SELECT DISTINCT municipal_entity FROM congregations ORDER BY municipal_entity"
+    )]
+
+    denomination_options = [row[0] for row in db.fetchall(
+        "SELECT DISTINCT denomination FROM congregations ORDER BY denomination"
+    )]
+
+    sf_options = [row[0] for row in db.fetchall(
+        "SELECT DISTINCT sf_member_status FROM congregations ORDER BY sf_member_status"
+    )]
+
+    return render_template(
+        "contacts.html",
+        contacts=contacts,
+        municipal_options=municipal_options,
+        denomination_options=denomination_options,
+        sf_options=sf_options,
+        selected_municipal=municipal,
+        selected_denomination=denomination,
+        selected_sf_status=sf_status,
+        contact_name=contact_name,
+        cong_name=cong_name
+    )
 @app.route("/case_studies")
 def how_case_studies():
     '''

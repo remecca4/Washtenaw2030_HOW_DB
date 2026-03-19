@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}HOW Contacts{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1200px; margin:auto;">
+    <h1 class="title">HOW Contact List</h1>
+
+<form method="GET" action="/contacts" class="filter-form" style="display:flex; flex-direction:column; gap:1rem;">
+
+    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+        <div style="display:flex; flex-direction:column;">
+            <label for="municipal-select">Municipal Entity:</label>
+            <select name="municipal" id="municipal-select">
+                <option value="">All</option>
+                {% for m in municipal_options %}
+                    <option value="{{ m }}" {% if selected_municipal == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column;">
+            <label for="denom-select">Denomination:</label>
+            <select name="denomination" id="denom-select">
+                <option value="">All</option>
+                {% for d in denomination_options %}
+                    <option value="{{ d }}" {% if selected_denomination == d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column;">
+            <label for="sf-select">SF Member Status:</label>
+            <select name="sf_status" id="sf-select">
+                <option value="">All</option>
+                {% for s in sf_options %}
+                    <option value="{{ s }}" {% if selected_sf_status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Text Inputs (stacked vertically with proper spacing) -->
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        <div style="display:flex; flex-direction:column;">
+            <label for="contact-name-search">Contact Name:</label>
+            <input type="text" name="contact_name" id="contact-name-search" value="{{ contact_name or '' }}" placeholder="Search name...">
+        </div>
+
+        <div style="display:flex; flex-direction:column;">
+            <label for="cong-name-search">Congregation Name:</label>
+            <input type="text" name="cong_name" id="cong-name-search" value="{{ cong_name or '' }}" placeholder="Search congregation...">
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div>
+        <button type="submit" class="button">Filter</button>
+    </div>
+</form>
+    <!-- Contacts Table -->
+    {% if contacts %}
+<div style="margin-top:1.5rem; display:grid; gap:1rem;">
+    {% for c in contacts %}
+    <div style="border:1px solid #ddd; border-radius:12px; padding:1rem; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        
+        <!-- Top row: Name + Role -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">{{ c[0] }}</h3>
+            <span style="font-size:0.9rem; opacity:0.7;">{{ c[6] }}</span>
+        </div>
+
+        <!-- Congregation (highlighted) -->
+        <div style="margin-top:0.3rem; font-weight:500;">
+            {{ c[7] }}
+        </div>
+
+        <!-- Location + Denomination -->
+        <div style="margin-top:0.4rem; font-size:0.95rem; opacity:0.85;">
+            {{ c[1] }} • {{ c[2] }}
+        </div>
+
+        <!-- SF Status -->
+        <div style="margin-top:0.4rem; font-size:0.9rem;">
+           Solar Faithful Member Status: {{ c[5] }}
+        </div>
+
+        <!-- Contact Info -->
+        <div style="margin-top:0.75rem;">
+            <div>Email: <a href="mailto:{{ c[3] }}">{{ c[3] }}</a></div>
+            <div>Phone: <a href="tel:{{ c[4] }}">{{ c[4] }}</a></div>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-text">No contacts found for selected filters.</p>
+{% endif %}
+</div>
+{% endblock %}
