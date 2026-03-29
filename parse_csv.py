@@ -2,6 +2,7 @@ from db_manager import DatabaseManager
 from datetime import datetime
 import csv
 
+
 db = DatabaseManager()
 
 def safe_date(val):
@@ -16,7 +17,8 @@ def parse_insert_congregation_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip() or None
+          try:
+            name = row.get('Congregation', '').strip()
             address = row.get('Address', '').strip() or None
             municipal_entity = row.get('Municipal Entity', '').strip() or None
             denomination = row.get('Denomination', '').strip() or None
@@ -36,11 +38,14 @@ def parse_insert_congregation_csv(csv_file):
                     website = row.get('Website').strip()
 
             db.insert_congregation(name, address, municipal_entity, denomination, size, website)
-
+          except Exception as e:
+            print(f"Skipping row {row}: {e}")
+            continue
 def parse_insert_contacts_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
+          try:
             cong_name = row.get('Congregation', '').strip()
             id=db.get_congregation_id(cong_name)
             name=row.get('Name', '').strip() or None
@@ -49,31 +54,38 @@ def parse_insert_contacts_csv(csv_file):
             phone_number= row.get('Phone Number', '').strip() or None
 
             db.insert_contact(id, name,role, phone_number, email)
-
+          except Exception as e:
+            print(f"Skipping row {row}: {e}")
+            continue
 def parse_insert_facilities_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip() or None
+           try:
+
+            name = row.get('Congregation', '').strip()
             id=db.get_congregation_id(name)
             facility_size = row.get('Facility size', '').strip()
             facility_size = int(facility_size) if facility_size.isdigit() else None
 
-            age = row.get('Age', '').strip()
-            age = int(age) if age.isdigit() else None
+            yb = row.get('Year Built', '').strip()
+            yb = int(yb) if yb.isdigit() else None
 
             heat_system = row.get('Heating System', '').strip() or None
             vent_system = row.get('Vent System', '').strip() or None
             ac_system = row.get('AC System', '').strip() or None
 
-            db.insert_facility(id, facility_size, age, heat_system, vent_system, ac_system)
-
+            db.insert_facility(id, facility_size, yb, heat_system, vent_system, ac_system)
+           except Exception as e:
+            print(f"Skipping row {row}: {e}")
+            continue
 
 def parse_insert_additions_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip() or None
+          try:
+            name = row.get('Congregation', '').strip()
             id=db.get_congregation_id(name)
 
             addition_size = row.get('Addition size', '').strip()
@@ -82,13 +94,16 @@ def parse_insert_additions_csv(csv_file):
             addition_date = safe_date(row.get('Addition date'))
 
             db.insert_addition(id, addition_size, addition_date)
-
+          except Exception as e:
+            print(f"Skipping row {row}: {e}")
+            continue
 
 def parse_insert_solar_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip() or None
+          try:
+            name = row.get('Congregation', '').strip()
             id=db.get_congregation_id(name)
 
             usable_sunlight = row.get('Usable Sunlight', '').strip()
@@ -104,13 +119,16 @@ def parse_insert_solar_csv(csv_file):
             co2_savings = int(co2_savings) if co2_savings.isdigit() else None
 
             db.insert_solar_potential(id, usable_sunlight, solar_panel_space, savings, co2_savings)
-
+          except Exception as e:
+            print(f"Skipping row {row}: {e}")
+            continue
 
 def parse_insert_climate_work_csv(csv_file):
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get('Congregation', '').strip() or None
+          try:
+            name = row.get('Congregation', '').strip()
             id=db.get_congregation_id(name)
 
             work_type = row.get('Work Type', '').strip()
@@ -122,7 +140,9 @@ def parse_insert_climate_work_csv(csv_file):
             impact = row.get('Impact', '').strip() or None
 
             db.insert_climate_work(id, work_type, start_date, end_date, description, impact)
-
+          except Exception as e:
+            print(f"Skipping row {row}: {e}")
+            continue
 
 if __name__ == "__main__":
     parse_insert_congregation_csv("congregations.csv")

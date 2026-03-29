@@ -1,3 +1,5 @@
+import re
+
 import psycopg2
 import os
 
@@ -55,7 +57,7 @@ class DatabaseManager:
          facility_id SERIAL PRIMARY KEY,
          congregation_id INTEGER NOT NULL REFERENCES congregations(congregation_id) ON DELETE CASCADE,
          facility_size INTEGER, --size of the facility (sq ft.)
-         age INTEGER, --age of building
+         year_built INTEGER, --year the building was built
          heating_sys TEXT, --heating system type
          vent_sys  TEXT, --ventilation system type
          ac_sys TEXT,  --ac system type
@@ -185,7 +187,7 @@ class DatabaseManager:
             print(f"An error occurred: {e}")
         conn.close()    
     
-    def insert_facility(self, congregation_id,facility_size, age,heating_sys, vent_sys, ac_sys,est_electric_bill=None):
+    def insert_facility(self, congregation_id,facility_size, year_built,heating_sys, vent_sys, ac_sys,est_electric_bill=None):
         '''
         Inserts a facility into the facilities table
         ------------------------------------------------------------
@@ -193,7 +195,7 @@ class DatabaseManager:
         ------------------------------------------------------------
         congregation_id: int, id of congregation from congregations table
         facility_size: int, size of facility in square feet
-        age: int, age of facility in years
+        year_built: int, year the building was built
         heating_sys: string, type of heating system the facility uses
         venting_sys: string, type of ventilation system the facility uses
         ac_sys: string, type of heating ac system the facility uses
@@ -202,16 +204,16 @@ class DatabaseManager:
         --------------------------------------------------
         int, last row id
         '''
-        if est_electric_bill==None:
+        if est_electric_bill==None and not facility_size==None:
            est_electric_bill=1.38*facility_size
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
         
         try:
             cursor.execute("""
-            INSERT INTO facilities (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,est_electric_bill)
+            INSERT INTO facilities (congregation_id, facility_size,year_built, heating_sys, vent_sys, ac_sys,est_electric_bill)
             VALUES (%s,%s,%s,%s,%s,%s,%s);
-        """, (congregation_id, facility_size,age, heating_sys, vent_sys, ac_sys,est_electric_bill))
+        """, (congregation_id, facility_size, year_built, heating_sys, vent_sys, ac_sys,est_electric_bill))
             conn.commit()
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
@@ -395,21 +397,33 @@ class DatabaseManager:
         }
       return congs  
     
+    def normalize(self,name):
+     return re.sub(r"[^a-z0-9]", "", name.lower())
+
     def get_congregation_id(self, congregation_name):
      if not congregation_name:
         raise ValueError("congregation_name cannot be empty or None")
 
-     query = "SELECT congregation_id FROM congregations WHERE name = %s"
+     normalized_name =  self.normalize(congregation_name)
 
-    # Use a context manager to auto-close connection/cursor
+     query = """
+        SELECT congregation_id
+        FROM congregations
+        WHERE REGEXP_REPLACE(LOWER(name), '[^a-z0-9]', '', 'g') = %s
+      """
+
      with psycopg2.connect(os.environ["DATABASE_URL"]) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(query, (congregation_name,))
+            cursor.execute(query, (normalized_name,))
             result = cursor.fetchone()
+
             if result:
                 return result[0]
             else:
-                raise ValueError(f"No congregation found with name '{congregation_name}'")
+                raise ValueError(
+                    f"No congregation found with name '{congregation_name}' (normalized: '{normalized_name}')"
+                )
+    
     def get_case_study_by_cong_id(self,congregation_id):
       query = """
         SELECT  case_study_id, congregation_id, case_study_path
@@ -457,7 +471,7 @@ class DatabaseManager:
     
     def get_facility_by_id(self, facility_id):
       query = """
-        SELECT facility_id, congregation_id, facility_size, age, 
+        SELECT facility_id, congregation_id, facility_size, year_built, 
                heating_sys, vent_sys, ac_sys, est_electric_bill
         FROM facilities
         WHERE facility_id = %s
@@ -472,7 +486,7 @@ class DatabaseManager:
             "facility_id": row[0],
             "congregation_id": row[1],
             "facility_size": row[2],
-            "age": row[3],
+            "year_built": row[3],
             "heating_sys": row[4],
             "vent_sys": row[5],
             "ac_sys": row[6],
@@ -580,7 +594,7 @@ class DatabaseManager:
     
     def get_facilities_by_congregation(self, congregation_id):
       query = """
-        SELECT facility_id, congregation_id, facility_size, age, 
+        SELECT facility_id, congregation_id, facility_size, year_built, 
                heating_sys, vent_sys, ac_sys, est_electric_bill
         FROM facilities
         WHERE congregation_id = %s
@@ -597,7 +611,7 @@ class DatabaseManager:
             "facility_id": row[0],
             "congregation_id": row[1],
             "facility_size": row[2],
-            "age": row[3],
+            "year_built": row[3],
             "heating_sys": row[4],
             "vent_sys": row[5],
             "ac_sys": row[6],
@@ -727,19 +741,19 @@ class DatabaseManager:
         
      if not(data["facility_size"] and data["facility_size"].isdigit()):
        data["facility_size"]=0
-     if not(data["age"] and data["age"].isdigit()):
-       data["age"]=0
+     if not(data["year_built"] and data["year_built"].isdigit()):
+       data["year_built"]=0
      if not(data["est_electric_bill"] and data["est_electric_bill"].isdigit()):
        data["est_electric_bill"]=0
      query = """
         UPDATE facilities
-        SET facility_size = %s, age = %s, heating_sys= %s, vent_sys = %s,
+        SET facility_size = %s, year_built = %s, heating_sys= %s, vent_sys = %s,
             ac_sys = %s, est_electric_bill = %s
         WHERE facility_id = %s
      """
      
      values = (
-        data["facility_size"], data["age"], data["heating_sys"],
+        data["facility_size"], data["year_built"], data["heating_sys"],
         data["vent_sys"], data["ac_sys"], data["est_electric_bill"], facility_id
     )
 

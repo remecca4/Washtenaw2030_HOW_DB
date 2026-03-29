@@ -385,14 +385,14 @@ def facilities_form():
     congregation_id = int(request.form["congregation_id"])  
     facility_size = request.form.get("facility_size")
     facility_size = int(facility_size) if facility_size and facility_size.isdigit() else None
-    age = request.form.get("age")
-    age = int(age) if age and age.isdigit() else None
+    year_built = request.form.get("year_built")
+    year_built = int(year_built) if year_built and year_built.isdigit() else None
     heating_sys = request.form.get("heating_sys")
     vent_sys = request.form.get("vent_sys")
     ac_sys = request.form.get("ac_sys")
     electric_bill=request.form.get("electric_bill") 
     electric_bill = int(electric_bill) if electric_bill and electric_bill.isdigit() else None
-    db.insert_facility(congregation_id, facility_size, age, heating_sys, vent_sys, ac_sys,electric_bill)
+    db.insert_facility(congregation_id, facility_size,year_built, heating_sys, vent_sys, ac_sys,electric_bill)
     return redirect(url_for("view_forms"))
 
 
@@ -678,7 +678,7 @@ def edit_facility(facility_id):
     if request.method == "POST":
         data={
           "facility_size": request.form["facility_size"],
-            "age": request.form["age"],
+            "year_built": request.form["year_built"],
             "heating_sys": request.form["heating_sys"],
             "vent_sys": request.form["vent_sys"],
             "ac_sys": request.form["ac_sys"],
@@ -897,6 +897,9 @@ def upload_congregations_csv():
     ---------------------------------------------------
     Redirect Response Object to add data page
     '''
+    _id = str(uuid.uuid4())
+
+    
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
@@ -910,7 +913,7 @@ def upload_congregations_csv():
     # Run heavy work OUTSIDE the request
     threading.Thread(
         target=parse_insert_congregation_csv,
-        args=(path,),
+        args=(path),
         daemon=True
     ).start()
 
