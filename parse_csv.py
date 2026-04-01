@@ -53,7 +53,7 @@ def parse_insert_contacts_csv(csv_file):
             email = row.get('Email', '').strip() or None
             phone_number= row.get('Phone Number', '').strip() or None
 
-            db.insert_contact(id, name,role, phone_number, email)
+            db.insert_contact(id, name,role, email, phone_number)
           except Exception as e:
             print(f"Skipping row {row}: {e}")
             continue

@@ -598,7 +598,7 @@ def delete_congregation(cong_id):
     Redirect Response Object to view congregation page 
     '''
     db.delete_congregation(cong_id)
-    return redirect("/congregations")
+    return redirect(f"/congregations?id={cong_id}")
 
 @app.route("/edit_contact/<int:contact_id>", methods=["GET", "POST"])
 @login_required
@@ -651,8 +651,9 @@ def delete_contact(contact_id):
     ---------------------------------------------------
     Redirect Response Object to view congregation page 
     '''
+    contact=db.get_contact_by_id(contact_id)
     db.delete_contact(contact_id)
-    return redirect("/congregations")
+    return redirect(f"/congregations?id={contact['congregation_id']}")
 
 @app.route("/edit_facility/<int:facility_id>", methods=["GET", "POST"])
 @login_required
@@ -707,8 +708,9 @@ def delete_facility(facility_id):
     ---------------------------------------------------
     Redirect Response Object to view congregation page 
     '''
+    facility=db.get_facility_by_id(facility_id)
     db.delete_facility(facility_id)
-    return redirect("/congregations")
+    return redirect(f"/congregations?id={facility['congregation_id']}")
 
 @app.route("/edit_addition/<int:addition_id>", methods=["GET", "POST"])
 @login_required
@@ -748,8 +750,9 @@ def edit_addition(addition_id):
 @app.route("/delete_addition/<int:addition_id>", methods=["POST"])
 @login_required
 def delete_addition(addition_id):
+    addition=db.get_addition_by_id(addition_id)
     db.delete_addition(addition_id)
-    return redirect("/congregations")
+    return redirect(f"/congregations?id={addition['congregation_id']}")
 
 @app.route("/edit_solar/<int:solar_pot_id>", methods=["GET", "POST"])
 @login_required
@@ -803,8 +806,9 @@ def delete_solar(solar_pot_id):
     ---------------------------------------------------
     Redirect Response Object to view congregation page 
     '''
+    solar_pot=db.get_solar_by_id(solar_pot_id)
     db.delete_Solar_Potential(solar_pot_id)
-    return redirect("/congregations")
+    return redirect(f"/congregations?id={solar_pot['congregation_id']}")
 
 @app.route("/edit_climate_work/<int:climate_work_id>", methods=["GET", "POST"])
 @login_required
@@ -862,8 +866,9 @@ def delete_climate_work(climate_work_id):
     ---------------------------------------------------
     Redirect Response Object to view congregation page 
     '''
+    climate_work=db.get_climate_work_by_id(climate_work_id)
     db.delete_Climate_Work(climate_work_id)
-    return redirect("/congregations")
+    return redirect(f"/congregations?id={climate_work['congregation_id']}")
 @app.route("/delete_case_study/<int:case_study_id>", methods=["POST"])
 @login_required
 def delete_case_study(case_study_id):
@@ -897,9 +902,6 @@ def upload_congregations_csv():
     ---------------------------------------------------
     Redirect Response Object to add data page
     '''
-    _id = str(uuid.uuid4())
-
-    
     file = request.files.get("csv_file")
     if not file or file.filename == "":
         flash("No file uploaded.")
