@@ -39,7 +39,7 @@ class User(UserMixin):
        
         Parameters
         ---------------------------------------------------------------------
-        :param  row: list, row in the users table with the following elements:
+         :param  row: list, row in the users table with the following elements:
          :param user_id, email, passsword hash, role, congregation_id, approved status
         '''
         self.id = row[0]
@@ -210,7 +210,7 @@ def reject_user(email):
     Redirect Response Object to manage users page
     '''
     user_id=db.get_user_id(email)
-    db.delete_User(user_id)
+    db.delete_user(user_id)
     flash(f"{email} rejected.")
     return redirect("/admin/manage-users")
 
@@ -280,7 +280,7 @@ def remove_user():
         email = request.form["email"]
         print("email")
         user_id=db.get_user_id(email)
-        db.delete_User(user_id)
+        db.delete_user(user_id)
 
         return redirect("/")
 
@@ -300,7 +300,7 @@ def view_forms():
     '''
     Summary
     ------------------------------------------
-     Displays the combined forms page
+    Displays the combined forms page
 
     Returns
     -----------------------------------------
@@ -341,8 +341,9 @@ def congregation_form():
     size = request.form.get("size")
     size = int(size) if size and size.isdigit() else None
     website = request.form.get("website") or None
-    sf_member_status=request.form.get("sf_member_status") or None
-    db.insert_congregation(name, address, municipal_entity, denomination, size, website,sf_member_status)
+    wash2030_member_status = request.form.get("wash2030_member_status") or None
+    sf_member_status = request.form.get("sf_member_status") or None
+    db.insert_congregation(name, address, municipal_entity, denomination, size, website, wash2030_member_status, sf_member_status)
     return redirect(url_for("view_forms"))
 
 @app.route("/contact/add", methods=["POST"])
@@ -425,7 +426,7 @@ def solar_form():
     Summary
     -----------------------------------------------
     Gets data from solar form and inserts it 
-    into the csolar potential table in the database
+    into the solar potential table in the database
 
     Returns
     ----------------------------------------------
@@ -573,6 +574,7 @@ def edit_congregation(cong_id):
             "denomination": request.form["denomination"],
             "size": request.form["size"],
             "website": request.form["website"],
+             "wash2030_member_status":request.form["wash2030_member_status"],
             "sf_member_status":request.form["sf_member_status"]
         }
         db.update_congregation(cong_id, data)
@@ -718,7 +720,7 @@ def edit_addition(addition_id):
     '''
     Summary
     ------------------------------------------------
-    Deletes addition with id `addition_id` from database 
+    Edits addition with id `addition_id` 
     
     Parameters
     -------------------------------------------------
@@ -750,6 +752,19 @@ def edit_addition(addition_id):
 @app.route("/delete_addition/<int:addition_id>", methods=["POST"])
 @login_required
 def delete_addition(addition_id):
+    '''
+    Summary
+    ------------------------------------------------
+    Deletes addition with id `addition_id` from database 
+    
+    Parameters
+    -------------------------------------------------
+     :param addition_id: int, id of addition to edit
+
+    Returns
+    ---------------------------------------------------
+    Redirect Response Object to view congregation page 
+    '''
     addition=db.get_addition_by_id(addition_id)
     db.delete_addition(addition_id)
     return redirect(f"/congregations?id={addition['congregation_id']}")
@@ -807,7 +822,7 @@ def delete_solar(solar_pot_id):
     Redirect Response Object to view congregation page 
     '''
     solar_pot=db.get_solar_by_id(solar_pot_id)
-    db.delete_Solar_Potential(solar_pot_id)
+    db.delete_solar_potential(solar_pot_id)
     return redirect(f"/congregations?id={solar_pot['congregation_id']}")
 
 @app.route("/edit_climate_work/<int:climate_work_id>", methods=["GET", "POST"])
@@ -860,15 +875,16 @@ def delete_climate_work(climate_work_id):
     
     Parameters
     -------------------------------------------------
-     :param climate_work_id: int, id of solar potential to edit
+     :param climate_work_id: int, id of climate work to edit
 
     Returns
     ---------------------------------------------------
     Redirect Response Object to view congregation page 
     '''
     climate_work=db.get_climate_work_by_id(climate_work_id)
-    db.delete_Climate_Work(climate_work_id)
+    db.delete_climate_work(climate_work_id)
     return redirect(f"/congregations?id={climate_work['congregation_id']}")
+
 @app.route("/delete_case_study/<int:case_study_id>", methods=["POST"])
 @login_required
 def delete_case_study(case_study_id):
@@ -912,7 +928,7 @@ def upload_congregations_csv():
 
     file.save(path)
 
-    # Run heavy work OUTSIDE the request
+    # Run heavy work outside the request
     threading.Thread(
         target=parse_insert_congregation_csv,
         args=(path),
@@ -953,6 +969,7 @@ def upload_contacts_csv():
     
     flash("Contacts CSV imported!")
     return redirect(request.referrer)
+
 @app.post("/upload/facilities")
 @login_required
 def upload_facilities_csv():
@@ -975,7 +992,7 @@ def upload_facilities_csv():
 
     file.save(path)
 
-    # Run heavy work OUTSIDE the request
+    # Run heavy work outside the request
     threading.Thread(
         target=parse_insert_facilities_csv,
         args=(path,),
@@ -1007,7 +1024,7 @@ def upload_additions_csv():
 
     file.save(path)
 
-    # Run heavy work OUTSIDE the request
+    # Run heavy work outside the request
     threading.Thread(
         target=parse_insert_additions_csv,
         args=(path,),
@@ -1039,7 +1056,7 @@ def upload_solar_csv():
 
     file.save(path)
 
-    # Run heavy work OUTSIDE the request
+    # Run heavy work outside the request
     threading.Thread(
         target=parse_insert_solar_csv,
         args=(path,),
@@ -1071,7 +1088,7 @@ def upload_climate_work_csv():
 
     file.save(path)
 
-    # Run heavy work OUTSIDE the request
+    # Run heavy work outside the request
     threading.Thread(
         target=parse_insert_climate_work_csv,
         args=(path,),
@@ -1085,8 +1102,8 @@ def filter_congs():
     '''
     Summary
     ------------------------------------------------
-    Displays HOW contacts filtered by municipal entity,
-    denomination, and sf_status
+    Displays congregations based on a search filtered by name, municipal entity,
+    denomination, wash2030_status, and sf_status.
 
     Returns
     ---------------------------------------------------
@@ -1095,9 +1112,10 @@ def filter_congs():
     municipal = request.args.get("municipal", "")
     denomination = request.args.get("denomination", "")
     sf_status = request.args.get("sf_status", "")
+    wash2030_status = request.args.get("wash2030_status", "")
     search_query = request.args.get("search", "").strip()
     # Base query
-    query = "SELECT congregation_id, name, municipal_entity, denomination, sf_member_status FROM congregations"
+    query = "SELECT congregation_id, name, municipal_entity, denomination, wash2030_member_status, sf_member_status FROM congregations"
     conditions = []
     params = []
 
@@ -1108,6 +1126,9 @@ def filter_congs():
     if denomination:
         conditions.append("denomination = %s")
         params.append(denomination)
+    if wash2030_status:
+          conditions.append("wash2030_member_status = %s")
+          params.append(wash2030_status)
     if sf_status:
       conditions.append("sf_member_status = %s")
       params.append(sf_status)
@@ -1125,23 +1146,39 @@ def filter_congs():
     # Fetch distinct options for filters
     municipal_options = [row[0] for row in db.fetchall("SELECT DISTINCT municipal_entity FROM congregations ORDER BY municipal_entity")]
     denomination_options = [row[0] for row in db.fetchall("SELECT DISTINCT denomination FROM congregations ORDER BY denomination")]
+    wash2030_options = [row[0] for row in db.fetchall("SELECT DISTINCT wash2030_member_status FROM congregations ORDER BY wash2030_member_status")]
     sf_options = [row[0] for row in db.fetchall("SELECT DISTINCT sf_member_status FROM congregations ORDER BY sf_member_status")]
     return render_template(
         "filter_congs.html",
         hows=congregations,
         municipal_options=municipal_options,
         denomination_options=denomination_options,
+        wash2030_options=wash2030_options,
         sf_options=sf_options,
         selected_municipal=municipal,
         selected_denomination=denomination,
+        selected_wash2030_status=wash2030_status,
         selected_sf_status=sf_status,
         search_query=search_query
     )
+
 @app.route("/contacts")
 def how_contacts():
+    '''
+    Summary
+    ------------------------------------------------
+    Displays congregation contacts based on a search 
+    filtered by congregation name, contact name, municipal entity,
+    denomination, sf_status, and wash2030 status.
+
+    Returns
+    ---------------------------------------------------
+    Render Template to contacts.html 
+    '''
     municipal = request.args.get("municipal", "")
     denomination = request.args.get("denomination", "")
     sf_status = request.args.get("sf_status", "")
+    wash2030_status = request.args.get("wash2030_status", "")
     contact_name = request.args.get("contact_name", "")
     cong_name= request.args.get("cong_name", "")
 
@@ -1152,6 +1189,7 @@ def how_contacts():
             g.denomination,
             c.email,
             c.phone_number,
+            g.wash2030_member_status,
             g.sf_member_status,
             c.role,
             g.name
@@ -1174,6 +1212,9 @@ def how_contacts():
         conditions.append("g.sf_member_status = %s")
         params.append(sf_status)
 
+    if wash2030_status:
+            conditions.append("g.wash2030_member_status = %s")
+            params.append(wash2030_status)
     if contact_name:
         conditions.append("c.name ILIKE %s")
         params.append(f"%{contact_name}%")
@@ -1198,19 +1239,24 @@ def how_contacts():
     sf_options = [row[0] for row in db.fetchall(
         "SELECT DISTINCT sf_member_status FROM congregations ORDER BY sf_member_status"
     )]
-
+    wash2030_options = [row[0] for row in db.fetchall(
+            "SELECT DISTINCT wash2030_member_status FROM congregations ORDER BY wash2030_member_status"
+        )]
     return render_template(
         "contacts.html",
         contacts=contacts,
         municipal_options=municipal_options,
         denomination_options=denomination_options,
         sf_options=sf_options,
+        wash2030_options=wash2030_options,
         selected_municipal=municipal,
         selected_denomination=denomination,
         selected_sf_status=sf_status,
+        selected_wash2030_status=wash2030_status,
         contact_name=contact_name,
         cong_name=cong_name
     )
+
 @app.route("/case_studies")
 def how_case_studies():
     '''
@@ -1237,5 +1283,6 @@ def how_case_studies():
         selected_congregation=selected_congregation,
         case_studies=case_studies,
     )
+
 if __name__ == "__main__":
     app.run(debug=True)

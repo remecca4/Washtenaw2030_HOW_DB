@@ -1,5 +1,4 @@
 import re
-
 import psycopg2
 import os
 
@@ -9,9 +8,6 @@ class DatabaseManager:
         '''
          Database Manager Constructor
          -------------------------------------
-         Parameters
-         ------------------------------------
-         db_path: string, path to database
         '''
         
         self._setup_database()
@@ -37,6 +33,7 @@ class DatabaseManager:
         denomination TEXT,
         size INTEGER DEFAULT 0,  -- amount of people in the HOW
         website TEXT,
+        wash2030_member_status TEXT CHECK (wash2030_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member'))
         sf_member_status TEXT CHECK (sf_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member'))
        );"""
         cursor.execute(cong_table_script)
@@ -118,6 +115,7 @@ class DatabaseManager:
          """
         cursor.execute(case_study_table_script)
         conn.commit()
+    
     def clear_tables(self):
         '''
         clears all tables in database
@@ -129,19 +127,21 @@ class DatabaseManager:
         print("CLEAR TABLES")
         conn.close()
 
-    def insert_congregation(self, name,address, municipal_entity, denomination, size,website,sf_member_status="Unknown"):
+    def insert_congregation(self, name,address, municipal_entity, denomination, size,website, wash2030_member_status="Unknown", sf_member_status="Unknown"):
         '''
-        Inserts a congregation into the congregations table
+        Summary
         ------------------------------------------------------------
+        Inserts a congregation into the congregations table
+        
         Parameters
         ------------------------------------------------------------
-        name: string, name of congregation
-        address: string, address of congregation
-        municipal entity: string
-        denomination: string, religous denomination of congregation
-        size: integer
-        website: string, url of congregation's website
-        --------------------------------------------------
+        :param name: string, name of congregation
+        :param address: string, address of congregation
+        :param municipal entity: string
+        :param denomination: string, religous denomination of congregation
+        :param size: integer
+        :param website: string, url of congregation's website
+        
         Returns
         --------------------------------------------------
         int, last row id
@@ -151,9 +151,9 @@ class DatabaseManager:
         
         try:
             cursor.execute("""
-            INSERT INTO congregations (name, address,municipal_entity, denomination, size,website,sf_member_status)
+            INSERT INTO congregations (name, address,municipal_entity, denomination, size,website, wash2030_member_status, sf_member_status)
             VALUES (%s, %s, %s,%s, %s, %s, %s);
-        """, (name, address,municipal_entity, denomination, size, website,sf_member_status))
+        """, (name, address,municipal_entity, denomination, size, website, wash2030_member_status, sf_member_status))
             conn.commit()
         except psycopg2.Error as e:
             print(f"An error occurred: {e}")
@@ -161,15 +161,17 @@ class DatabaseManager:
     
     def insert_contact(self, congregation_id,name,role,email,phone_number):
         '''
-        Inserts a contact into the contacts table
+        Summary
         ------------------------------------------------------------
+        Inserts a contact into the contacts table
+        
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from congregations table
-        name: string, name of contact
-        email: string, contact's email
-        phone_number: string, contact's phone number
-        --------------------------------------------------
+        :param congregation_id: int, id of congregation from congregations table
+        :param name: string, name of contact
+        :param email: string, contact's email
+        :param phone_number: string, contact's phone number
+        
         Returns
         --------------------------------------------------
         int, last row id
@@ -189,17 +191,19 @@ class DatabaseManager:
     
     def insert_facility(self, congregation_id,facility_size, year_built,heating_sys, vent_sys, ac_sys,est_electric_bill=None):
         '''
-        Inserts a facility into the facilities table
+        Summary
         ------------------------------------------------------------
+        Inserts a facility into the facilities table
+        
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from congregations table
-        facility_size: int, size of facility in square feet
-        year_built: int, year the building was built
-        heating_sys: string, type of heating system the facility uses
-        venting_sys: string, type of ventilation system the facility uses
-        ac_sys: string, type of heating ac system the facility uses
-        --------------------------------------------------
+        :param congregation_id: int, id of congregation from congregations table
+        :param facility_size: int, size of facility in square feet
+        :param year_built: int, year the building was built
+        :param heating_sys: string, type of heating system the facility uses
+        :param venting_sys: string, type of ventilation system the facility uses
+        :param  ac_sys: string, type of heating ac system the facility uses
+        
         Returns
         --------------------------------------------------
         int, last row id
@@ -221,14 +225,16 @@ class DatabaseManager:
     
     def insert_addition(self, congregation_id,addition_size, addition_date):
         '''
-        Inserts a congregation into the congres tabel
+        Summary
         ------------------------------------------------------------
+        Inserts an addition into the additions table
+        
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from congregations table
-        addition_size: int, size of addition in square feet
-        addition_date: datetime, date addition was adde
-        --------------------------------------------------
+        :param congregation_id: int, id of congregation from congregations table
+        :param addition_size: int, size of addition in square feet
+        :param addition_date: datetime, date addition was added
+       
         Returns
         --------------------------------------------------
         int, last row id
@@ -249,16 +255,18 @@ class DatabaseManager:
         
     def insert_solar_potential(self, congregation_id,usable_sunlight,solar_panel_space,savings,co2_savings):
         '''
-        Inserts a congregation into the congres tabel
+        Summary
         ------------------------------------------------------------
+        Inserts solar potential entry into the solar potential table
+        
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from congregations table
-        usable_sunlight: int, amount of usable sunlight per year(hours)
-        solar_panel_space: int, amount of space to put solar panels
-        savings: int, amount of savings ($)
-        co2_savings: int, amount of co2 savings/year(metric tons)
-        --------------------------------------------------
+        :param congregation_id: int, id of congregation from congregations table
+        :param usable_sunlight: int, amount of usable sunlight per year(hours)
+        :param solar_panel_space: int, amount of space to put solar panels
+        :param savings: int, amount of savings ($)
+        :param co2_savings: int, amount of co2 savings/year(metric tons)
+       
         Returns
         --------------------------------------------------
         int, last row id
@@ -279,17 +287,19 @@ class DatabaseManager:
           
     def insert_climate_work(self, congregation_id,work_type,start_date,end_date,description, impact):
         '''
-        Inserts climate work into the climate work table
+        Summary
         ------------------------------------------------------------
+        Inserts climate work into the climate work table
+       
         Parameters
         ------------------------------------------------------------
-        congregation_id: int, id of congregation from congregations table
-        work_type: string, category of climate work
-        start_date: datetime, date the climate work started
-        end_date: datetime, date the climate work ended
-        description: string, description of climate work
-        impact: string, description of climate work impact
-        --------------------------------------------------
+        :param congregation_id: int, id of congregation from congregations table
+        :param work_type: string, category of climate work
+        :param start_date: datetime, date the climate work started
+        :param end_date: datetime, date the climate work ended
+        :param description: string, description of climate work
+        :param impact: string, description of climate work impact
+        
         Returns
         --------------------------------------------------
         int, last row id
@@ -373,9 +383,22 @@ class DatabaseManager:
         conn.close()
      
     def get_congregation_by_id(self,congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects a row from the congregations table with id `congregation_id`
+
+      Parameters
+      --------------------------------------------------
+       :param congregation_id: int, id of congregation from congregations table
+      
+      Returns
+      ---------------------------------------------------
+       Dictionary with all columns of the selected congregation row
+      '''
       query = """
         SELECT  congregation_id, name, address, 
-               municipal_entity,denomination, size ,website, sf_member_status 
+               municipal_entity,denomination, size ,website, wash2030_member_status, sf_member_status
         FROM congregations
         WHERE congregation_id = %s
       """
@@ -393,14 +416,42 @@ class DatabaseManager:
             "denomination": rows[0][4],
             "size": rows[0][5],
             "website": rows[0][6],
-            "sf_member_status": rows[0][7]
+            "wash2030_member_status": rows[0][7],
+            "sf_member_status": rows[0][8]
         }
       return congs  
     
     def normalize(self,name):
+     '''
+     Summary
+     --------------------------------
+     Normalizes `name` by making it lowercase 
+     and removing all non letter characters 
+
+     Parameters
+     ----------------------------------
+     :param string, name to normalize
+
+     Returns
+     -----------------------------------
+     Normalized name
+     '''
      return re.sub(r"[^a-z0-9]", "", name.lower())
 
     def get_congregation_id(self, congregation_name):
+     '''
+     Summary
+     ------------------------------------------------
+     Selects the id of a congregation with name, `congregation_name`
+
+     Parameters
+     --------------------------------------------------
+     :param congregation_name: string, name of congregation to select
+
+     Returns
+     ---------------------------------------------------
+     congregation_id
+     '''
      if not congregation_name:
         raise ValueError("congregation_name cannot be empty or None")
 
@@ -425,6 +476,23 @@ class DatabaseManager:
                 )
     
     def get_case_study_by_cong_id(self,congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects all rows from the case studies table with congregation id `congregation_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param congregation_id: int, id of congregation from congregations table
+
+      Returns
+      ---------------------------------------------------
+       List of dictionary with rows of all case studies selected
+      '''
+
+      
+
+
       query = """
         SELECT  case_study_id, congregation_id, case_study_path
         FROM case_studies
@@ -446,6 +514,19 @@ class DatabaseManager:
       return cs
     
     def get_contact_by_id(self, contact_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects row from the contacts table with contact id `contact_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param contact_id: int, id of contact from contact table
+
+      Returns
+      ---------------------------------------------------
+       Dictionary with all columns of the selected contact row
+      '''
       query = """
         SELECT contact_id, congregation_id, name, role, email, phone_number
         FROM contacts
@@ -468,8 +549,20 @@ class DatabaseManager:
 
       return contact
     
-    
     def get_facility_by_id(self, facility_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects row from the facilities table with facility id `facility_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param facility_id: int, id of facility from facilities table
+
+      Returns
+      ---------------------------------------------------
+       Dictionary with all columns of the selected facility row
+      '''
       query = """
         SELECT facility_id, congregation_id, facility_size, year_built, 
                heating_sys, vent_sys, ac_sys, est_electric_bill
@@ -496,7 +589,19 @@ class DatabaseManager:
       return facility
     
     def get_addition_by_id(self, addition_id):
-     
+      '''
+      Summary
+      -------------------------------------------------
+      Selects row from the additions table with addition id `addition_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param addition_id: int, id of addition from additions table
+
+      Returns
+      ---------------------------------------------------
+       Dictionary with all columns of the selected addition row
+      '''
       query = """
         SELECT addition_id , congregation_id, addition_size,addition_date 
         FROM additions
@@ -518,6 +623,19 @@ class DatabaseManager:
       return addition
     
     def get_solar_by_id(self, solar_pot_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects row from the solar potential table with solar potential id `solar_pot_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param solar_pot_id: int, id of solar potential from solar potential table
+
+      Returns
+      ---------------------------------------------------
+       Dictionary with all columns of the selected solar potential row
+      '''
       query = """
         SELECT solar_pot_id, congregation_id, usable_sunlight,solar_panel_space,
          savings, co2_savings
@@ -542,6 +660,19 @@ class DatabaseManager:
       return solar
     
     def get_climate_work_by_id(self, climate_work_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects row from the climate work table with climate work id `climate_work_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param climate_work_id: int, id of climate work from climate work table
+
+      Returns
+      ---------------------------------------------------
+       Dictionary with all columns of the selected climate work row
+      '''
       query = """
         SELECT climate_work_id, congregation_id, work_type,start_date,end_date,
          description, impact
@@ -567,6 +698,19 @@ class DatabaseManager:
       return work
     
     def get_contacts_by_congregation(self, congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects all rows from the contacts table with congregation_id `congregation_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param congregation_id: int, id of congregation from congregations table
+
+      Returns
+      ---------------------------------------------------
+       List of dictionaries with rows of all contacts selected
+      '''
       query = """
         SELECT contact_id, congregation_id, name, role, email, 
                phone_number
@@ -593,6 +737,19 @@ class DatabaseManager:
       return contacts
     
     def get_facilities_by_congregation(self, congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects all rows from the facilities table with congregation_id `congregation_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param congregation_id: int, id of congregation from congregations table
+
+      Returns
+      ---------------------------------------------------
+       List of dictionaries with rows of all facilities selected
+      '''
       query = """
         SELECT facility_id, congregation_id, facility_size, year_built, 
                heating_sys, vent_sys, ac_sys, est_electric_bill
@@ -621,6 +778,19 @@ class DatabaseManager:
       return facilities
     
     def get_additions_by_congregation(self, congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects all rows from the additions table with congregation_id `congregation_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param congregation_id: int, id of congregation from congregations table
+
+      Returns
+      ---------------------------------------------------
+       List of dictionaries with rows of all additions selected
+      '''
      
       query = """
         SELECT addition_id , congregation_id, addition_size,addition_date 
@@ -645,6 +815,19 @@ class DatabaseManager:
       return additions
     
     def get_solar_by_congregation(self, congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects all rows from the solar potential table with congregation_id `congregation_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param congregation_id: int, id of congregation from congregations table
+
+      Returns
+      ---------------------------------------------------
+       List of dictionaries with all solar potential rows selected
+      '''
       query = """
         SELECT solar_pot_id, congregation_id, usable_sunlight,solar_panel_space,
          savings, co2_savings
@@ -671,6 +854,19 @@ class DatabaseManager:
       return solar
     
     def get_climate_work_by_congregation(self, congregation_id):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects all rows from the climate work table with congregation_id `congregation_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param congregation_id: int, id of congregation from congregations table
+
+      Returns
+      ---------------------------------------------------
+       List of dictionaries with all climate work rows selected
+      '''
       query = """
         SELECT climate_work_id, congregation_id, work_type,start_date,end_date,
          description, impact
@@ -697,19 +893,29 @@ class DatabaseManager:
 
       return work
     
-    def update_congregation(self, cong_id, data):
+    def update_congregation(self, congregation_id, data):
+     '''
+     Summary
+     -----------------------------------------------------
+     Updates congregation with id `congregation_id` with the values in `data`
+
+     Parameters
+     -------------------------------------------------------
+     :param congregation_id: int, id of congregation from congregations table
+     :param data: dictionary, values to update row with
+     '''
      if not(data["size"] and data["size"].isdigit()):
        data["size"]=0
      query = """
         UPDATE congregations
         SET name = %s, address = %s, municipal_entity = %s, denomination = %s,
-            size = %s, website = %s, sf_member_status=%s
+            size = %s, website = %s, wash2030_member_status=%s, sf_member_status=%s
         WHERE congregation_id = %s
      """
      print(data)
      values = (
         data["name"], data["address"], data["municipal_entity"],
-        data["denomination"], data["size"], data["website"], data["sf_member_status"], cong_id
+        data["denomination"], data["size"], data["website"], data["wash2030_member_status"], data["sf_member_status"], congregation_id
     )
 
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
@@ -719,6 +925,16 @@ class DatabaseManager:
      conn.close()
     
     def update_contact(self, contact_id, data):
+     '''
+     Summary
+     -----------------------------------------------------
+     Updates contact with id `contact_id` with the values in `data`
+
+     Parameters
+     -------------------------------------------------------
+     :param contact_id: int, id of contact from contacts table
+     :param data: dictionary, values to update row with
+     '''
         
      query = """
         UPDATE contacts
@@ -738,6 +954,16 @@ class DatabaseManager:
      conn.close()
     
     def update_facility(self, facility_id, data):
+     '''
+     Summary
+     -----------------------------------------------------
+     Updates facility with id `facility_id` with the values in `data`
+
+     Parameters
+     -------------------------------------------------------
+     :param facility_id: int, id of facility from facilities table
+     :param data: dictionary, values to update row with
+     '''
         
      if not(data["facility_size"] and data["facility_size"].isdigit()):
        data["facility_size"]=0
@@ -764,6 +990,16 @@ class DatabaseManager:
      conn.close()
     
     def update_addition(self, addition_id, data):
+     '''
+     Summary
+     -----------------------------------------------------
+     Updates addition with id `addition_id` with the values in `data`
+
+     Parameters
+     -------------------------------------------------------
+     :param addition_id: int, id of addition from additions table
+     :param data: dictionary, values to update row with
+     '''
      if not(data["addition_size"] and data["addition_size"].isdigit())==None:
        data["addition_size"]=0
      query = """
@@ -783,6 +1019,16 @@ class DatabaseManager:
      conn.close()
     
     def update_solar(self, solar_pot_id, data):
+     '''
+     Summary
+     -----------------------------------------------------
+     Updates solar potential with id `solar_pot_id` with the values in `data`
+
+     Parameters
+     -------------------------------------------------------
+     :param solar_pot_id: int, id of solar potential from solar potential table
+     :param data: dictionary, values to update row with
+     '''
      if not(data["usable_sunlight"] and data["usable_sunlight"].isdigit()):
        data["usable_sunlight"]=0
      if not(data["solar_panel_space"] and data["solar_panel_space"].isdigit()):
@@ -809,6 +1055,16 @@ class DatabaseManager:
      conn.close()
     
     def update_climate_work(self, climate_work_id, data):
+     '''
+     Summary
+     -----------------------------------------------------
+     Updates climate work with id `climate_work_id` with the values in `data`
+
+     Parameters
+     -------------------------------------------------------
+     :param climate_work_id: int, id of climate work from climate work table
+     :param data: dictionary, values to update row with
+     '''
      query = """
         UPDATE climate_work
         SET work_type = %s, start_date = %s, end_date= %s, description = %s,
@@ -826,42 +1082,41 @@ class DatabaseManager:
      cur.execute(query, values)
      conn.commit()
      conn.close()
-    
-    def update_case_study(self, congregation_id, case_study_path):
-     query = """
-        UPDATE case_studies
-        SET case_study= %s
-        WHERE climate_work_id = %s
-     """
-     
-     values = (
-       case_study_path, congregation_id
-    )
-
-     conn = psycopg2.connect(os.environ["DATABASE_URL"])
-     cur = conn.cursor()
-     cur.execute(query, values)
-     conn.commit()
-     conn.close()
    
-    def delete_congregation(self, cong_id):
-     
+    def delete_congregation(self, congregation_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes congregation with id `congregation_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param congregation_id: int, id of congregation from congregations table'''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      try:
         cur.execute(
             "DELETE FROM congregations WHERE congregation_id = %s",
-            (cong_id,)
+            (congregation_id,)
         )
         conn.commit()
      except psycopg2.Error as e:
-        print(f"Error deleting congregation {cong_id}: {e}")
+        print(f"Error deleting congregation {congregation_id}: {e}")
         conn.rollback()
 
      finally:
         conn.close()
     
     def delete_contact(self, contact_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes contact with id `contact_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param contact_id: int, id of contact from contacts table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM contacts WHERE contact_id = %s", (contact_id,))
@@ -869,6 +1124,15 @@ class DatabaseManager:
      conn.close()
 
     def delete_facility(self, facility_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes facility with id `facility_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param facility_id: int, id of facility from facilities table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM facilities WHERE facility_id = %s", (facility_id,))
@@ -876,27 +1140,63 @@ class DatabaseManager:
      conn.close()
    
     def delete_addition(self, addition_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes addition with id `addition_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param addition_id: int, id of addition from additions table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM additions WHERE addition_id = %s", (addition_id,))
      conn.commit()
      conn.close()
     
-    def delete_Solar_Potential(self, solar_pot_id):
+    def delete_solar_potential(self, solar_pot_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes solar potential with id `solar_pot_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param solar_pot_id: int, id of solar potential from solar potential table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM solar_potential WHERE solar_pot_id = %s", (solar_pot_id,))
      conn.commit()
      conn.close()
     
-    def delete_Climate_Work(self, climate_work_id):
+    def delete_climate_work(self, climate_work_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes climate work with id `climate_work_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param climate_work_id: int, id of climate work from climate work table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM climate_work WHERE climate_work_id = %s", (climate_work_id,))
      conn.commit()
      conn.close()
     
-    def delete_User(self, user_id):
+    def delete_user(self, user_id):
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes user with id `user_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param user_id: int, id of user from users table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
@@ -904,7 +1204,15 @@ class DatabaseManager:
      conn.close()
     
     def delete_case_study(self, case_study_id):
-     
+     '''
+     Summary
+     ------------------------------------------------
+     Deletes case study with id `case_study_id`   
+
+     Parameters
+     -------------------------------------------------
+     :param case_study_id: int, id of case study from case studies table
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      try:
@@ -936,6 +1244,15 @@ class DatabaseManager:
         conn.close()
     
     def get_all_congregations(self):
+        '''
+        Summary 
+        -----------------------------
+        Gets all congregation ids and names in congregations table
+
+        Returns
+        -----------------------------
+        list of dictionaries 
+        '''
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
         cursor.execute("SELECT congregation_id,name FROM congregations ORDER BY name")
@@ -944,6 +1261,15 @@ class DatabaseManager:
         return [{"congregation_id": row[0],"name": row[1]} for row in rows]
     
     def get_all_case_study_cong_ids(self):
+        '''
+        Summary 
+        -----------------------------
+        Gets all congregation ids and names for all congregations in case studies table
+
+        Returns
+        -----------------------------
+        list of dictionaries 
+        '''
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
         cursor.execute("SELECT DISTINCT C.congregation_id,C.name FROM congregations C INNER JOIN case_studies CS ON CS.congregation_id=C.congregation_id ORDER BY C.name")
@@ -958,6 +1284,19 @@ class DatabaseManager:
         )
 
     def get_user_by_id(self, user_id):
+        '''
+      Summary
+      -------------------------------------------------
+      Selects row from the users table with user id `user_id`
+      
+      Parameters
+      --------------------------------------------------
+      :param user_id: int, id of user from users table
+
+      Returns
+      ---------------------------------------------------
+       user row
+      '''
         row=self.fetchone(
             "SELECT * FROM users WHERE id = %s",
             (user_id,)
@@ -966,6 +1305,19 @@ class DatabaseManager:
         return row
     
     def get_user_id(self,email):
+      '''
+      Summary
+      -------------------------------------------------
+      Selects user id from the users table with email `email`
+      
+      Parameters
+      --------------------------------------------------
+      :param email: string, user's email
+
+      Returns
+      ---------------------------------------------------
+       int, user id
+      '''
       conn = psycopg2.connect(os.environ["DATABASE_URL"])
       cursor = conn.cursor()
       try:
@@ -983,10 +1335,28 @@ class DatabaseManager:
         return None
     
     def get_admin_emails(self):
+      '''
+      Summary
+      ---------------------------
+      Selects all ids of users with the admin role
+
+      Returns
+      ---------------------------------------------
+      list of user ids
+      '''
       rows = self.fetchall("SELECT email FROM users WHERE role = 'admin'")
       return [r[0] for r in rows] 
     
     def approve_user(self, user_id):
+      '''
+      Summary
+      --------------------------------
+      Approves user with id `user_id`
+     
+      Parameters
+      --------------------------------------------------
+      :param user_id: int, id of user from users table
+      '''
       conn = psycopg2.connect(os.environ["DATABASE_URL"])
       cur = conn.cursor()
       cur.execute("UPDATE users SET approved = TRUE WHERE id = %s", (user_id,))
@@ -994,12 +1364,31 @@ class DatabaseManager:
       conn.close()
     
     def close(self):
+        '''
+        Summary
+        -------------------------------
+        Closes the connection and cursor.
+        '''
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cursor = conn.cursor()
         cursor.close()
         conn.close()
     
     def fetchone(self, query, params=()):
+     '''
+     Summary
+     -----------------------------------------------
+     Fetches one row returned after executing `query`
+
+     Parameters
+     -------------------------------------------------
+     :param query: string, query to execute
+     :param params: tuple, optional, parameters for the query
+
+     Returns
+     ---------------------------------------------------
+     row
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, params)
@@ -1008,6 +1397,20 @@ class DatabaseManager:
      return row
      
     def fetchall(self, query, params=()):
+     '''
+     Summary
+     -----------------------------------------------
+     Fetches all rows returned after executing `query`
+
+     Parameters
+     -------------------------------------------------
+     :param query: string, query to execute
+     :param params: tuple, optional, parameters for the query
+
+     Returns
+     ---------------------------------------------------
+     tuple of rows
+     '''
      conn = psycopg2.connect(os.environ["DATABASE_URL"])
      cur = conn.cursor()
      cur.execute(query, params)

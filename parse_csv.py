@@ -6,6 +6,20 @@ import csv
 db = DatabaseManager()
 
 def safe_date(val):
+    '''
+    Summary
+    -----------------
+    converts a string to a datetime object
+
+    Parameters
+    --------------------
+    val: string
+
+    Returns
+    -----------------------
+    Datetime object if the conversion is 
+    successful, else None
+    '''
     if not val:
         return None
     try:
@@ -14,6 +28,15 @@ def safe_date(val):
         return None
 
 def parse_insert_congregation_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the congregations table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -41,7 +64,17 @@ def parse_insert_congregation_csv(csv_file):
           except Exception as e:
             print(f"Skipping row {row}: {e}")
             continue
+
 def parse_insert_contacts_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the contacts table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -57,7 +90,17 @@ def parse_insert_contacts_csv(csv_file):
           except Exception as e:
             print(f"Skipping row {row}: {e}")
             continue
+
 def parse_insert_facilities_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the facilities table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -81,6 +124,15 @@ def parse_insert_facilities_csv(csv_file):
             continue
 
 def parse_insert_additions_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the additions table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -99,6 +151,15 @@ def parse_insert_additions_csv(csv_file):
             continue
 
 def parse_insert_solar_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the solar potential table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -124,6 +185,15 @@ def parse_insert_solar_csv(csv_file):
             continue
 
 def parse_insert_climate_work_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the climate work table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -145,5 +215,4 @@ def parse_insert_climate_work_csv(csv_file):
             continue
 
 if __name__ == "__main__":
-    parse_insert_congregation_csv("congregations.csv")
     db.close()
