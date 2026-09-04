@@ -33,7 +33,7 @@ class DatabaseManager:
         denomination TEXT,
         size INTEGER DEFAULT 0,  -- amount of people in the HOW
         website TEXT,
-        wash2030_member_status TEXT CHECK (wash2030_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member'))
+        wash2030_member_status TEXT CHECK (wash2030_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member')),
         sf_member_status TEXT CHECK (sf_member_status IN ('Unknown', 'Unsure', 'Interested', 'Not Interested','Member'))
        );"""
         cursor.execute(cong_table_script)
