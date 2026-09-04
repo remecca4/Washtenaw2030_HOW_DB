@@ -24,11 +24,18 @@
         <label for="denomination">Denomination:</label>
         <input type="text" id="denomination" name="denomination" value="{{ congregation['denomination'] }}">
 
-        <label for="size">Size (sq ft):</label>
+        <label for="size">Size:</label>
         <input type="number" id="size" name="size" value="{{ congregation['size'] }}">
 
         <label for="website">Website:</label>
         <input type="text" id="website" name="website" value="{{ congregation['website'] }}">
+        
+        <label for="wash2030_member_status">Washtenaw 2030 Member Status:</label>
+       <select id="wash2030_member_status" name="wash2030_member_status">
+       <option value="Unknown" {% if congregation['wash2030_member_status'] == 'Unknown' %}selected{% endif %}>Unknown</option>
+       <option value="Interested" {% if congregation['wash2030_member_status'] == 'Interested' %}selected{% endif %}>Interested</option>
+       <option value="Member" {% if congregation['wash2030_member_status'] == 'Member' %}selected{% endif %}>Member</option>
+       <option value="Not Interested" {% if congregation['wash2030_member_status'] == 'Not Interested' %}selected{% endif %}>Not Interested</option>
 
         <label for="sf_member_status">Solar Faithful Member Status:</label>
        <select id="sf_member_status" name="sf_member_status">

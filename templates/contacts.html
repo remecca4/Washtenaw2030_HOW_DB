@@ -27,7 +27,15 @@
                 {% endfor %}
             </select>
         </div>
-
+        <div style="display:flex; flex-direction:column;">
+            <label for="wash2030-select">Washtenaw 2030 Member Status:</label>
+            <select name="wash2030_status" id="wash2030-select">
+                <option value="">All</option>
+                {% for w in wash2030_options %}
+                    <option value="{{ w }}" {% if selected_wash2030_status == w %}selected{% endif %}>{{ w }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <div style="display:flex; flex-direction:column;">
             <label for="sf-select">SF Member Status:</label>
             <select name="sf_status" id="sf-select">
@@ -39,7 +47,7 @@
         </div>
     </div>
 
-    <!-- Text Inputs (stacked vertically with proper spacing) -->
+    <!-- Text Inputs-->
     <div style="display:flex; flex-direction:column; gap:0.5rem;">
         <div style="display:flex; flex-direction:column;">
             <label for="contact-name-search">Contact Name:</label>
@@ -66,22 +74,25 @@
         <!-- Top row: Name + Role -->
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0;">{{ c[0] }}</h3>
-            <span style="font-size:0.9rem; opacity:0.7;">{{ c[6] }}</span>
+            <span style="font-size:0.9rem; opacity:0.7;">{{ c[7] }}</span>
         </div>
 
-        <!-- Congregation (highlighted) -->
+        <!-- Congregation -->
         <div style="margin-top:0.3rem; font-weight:500;">
-            {{ c[7] }}
+            {{ c[8] }}
         </div>
 
         <!-- Location + Denomination -->
         <div style="margin-top:0.4rem; font-size:0.95rem; opacity:0.85;">
             {{ c[1] }} • {{ c[2] }}
         </div>
-
+        <!-- Wash2030 Status -->
+        <div style="margin-top:0.4rem; font-size:0.9rem;">
+           Washtenaw 2030 Member Status: {{ c[5] }}
+        </div>
         <!-- SF Status -->
         <div style="margin-top:0.4rem; font-size:0.9rem;">
-           Solar Faithful Member Status: {{ c[5] }}
+           Solar Faithful Member Status: {{ c[6] }}
         </div>
 
         <!-- Contact Info -->

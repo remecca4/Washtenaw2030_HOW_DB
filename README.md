@@ -25,8 +25,6 @@ Users can add, edit, and view detailed congregation information including:
 
 * Solar Faithful membership status
 
-* Facilities Tracking
-
 Stores building characteristics such as:
 
 * Facility size
@@ -37,17 +35,15 @@ Stores building characteristics such as:
 
 * Estimated electric bill
 
-* Sustainability & Climate Data
+* Building additions
 
 Tracks sustainability work performed by congregations, including:
 
 * Solar potential
 
-* Climate initiatives
+* Climate work
 
-* Building additions
 
-* Environmental impact
 
 ### Case Studies
 
@@ -82,7 +78,7 @@ CSV imports run as background threads so the website remains responsive during l
 
 ### Authentication System
 
-The site includes a secure login system with: \
+The site includes a secure login system with: 
 
  * password hashing
 
@@ -90,7 +86,7 @@ The site includes a secure login system with: \
 
 * admin approval for new users
 
-User roles include: \
+User roles include: 
 
 * Admin – manage users and database
 
@@ -118,69 +114,38 @@ User roles include: \
 
 * Render – web application hosting
 
-* Aiven – managed PostgreSQL database
+* Aiven – PostgreSQL database
 
 * Cloudinary – image hosting for case studies
 
 #### System Architecture
 
-The application uses a simple three-layer architecture:
+      User Browser
+             ↓
+     Flask Web Application
+             ↓
+     PostgreSQL Database
+             ↓
+     Cloudinary (image storage)
 
-User Browser
-     ↓
-Flask Web Application
-     ↓
-PostgreSQL Database
-     ↓
-Cloudinary (image storage)
 
-The Flask server handles:
-
-authentication
-
-form submissions
-
-database queries
-
-CSV uploads
-
-rendering templates
-
-Project Structure
-project/
-│
-├── app.py
-├── db_manager.py
-├── parse_csv.py
-│
-├── templates/
-│   ├── home.html
-│   ├── forms.html
-│   ├── congregations.html
-│   ├── contacts.html
-│   ├── case_studies.html
-│   └── edit_*.html
-│
-├── static/
-│
-└── README.md
 ### Installation
 1. Clone the repository
-git clone https://github.com/yourusername/how-database.git
-cd how-database
+
+    `git clone  https://github.com/yourusername/how- database.git`
+
+    `cd how-database`
 2. Install dependencies
-pip install -r requirements.txt
+
+    `pip install -r requirements.txt`
 3. Set environment variables
 
-The application requires several environment variables. \
+     `SECRET_KEY=your_secret_key`
+     `CLOUDINARY_CLOUD_NAME=your_cloud_name` 
+     `CLOUDINARY_API_KEY=your_api_key` 
+     `CLOUDINARY_API_SECRET=your_api_secret` 
+`DATABASE_URL=your_postgresql_connection_string` 
 
-SECRET_KEY=your_secret_key \
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name \
-CLOUDINARY_API_KEY=your_api_key \
-CLOUDINARY_API_SECRET=your_api_secret \
-
-DATABASE_URL=your_postgresql_connection_string \
 ### Running the Application
 
 Start the Flask server: \
@@ -192,17 +157,14 @@ Then open your browser: \
 http://localhost:5000 \
 ### Creating the First Admin
 
-If no admin exists in the database, create one manually by inserting a user with role "admin" in the Users table. \
+If no admin exists in the database, create one manually by inserting a user with role "admin" in the Users table. 
 
-Admins can: \
+Admins can: 
 
-approve new users \
-
-reject signup requests \
-
-create new users \
-
-remove users \
+* approve new users 
+* reject signup requests 
+* create new users 
+* remove users 
 
 
 ### Customizing for Your Own HOW Database
@@ -225,4 +187,5 @@ Because the database logic is centralized in db_manager.py, most customization c
 ### Author
 
 Rachel Mecca
+
 Computer Science – University of Michigan
