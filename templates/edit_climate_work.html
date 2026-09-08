@@ -19,15 +19,17 @@
         <input type="text" id="work_type" name="work_type" 
                value="{{ climate_work['work_type'] }}" required>
 
-        <!-- START DATE-->
+        <!-- START DATE -->
         <label for="start_date">Start Date:</label>
-        <input type="date" id="start_date" name="start_date" 
-               value="{{ climate_work['start_date'] }}" required>
+        <input type="date" id="start_date" name="start_date"
+          value="{{ climate_work['start_date'].strftime('%Y-%m-%d') }}"
+           required>
 
-        <!-- END DATE -->
-        <label for="end_date">End Date</label>
-        <input type="date" id="end_date" name="end_date" 
-               value="{{ climate_work['end_date'] }}" required>
+         <!-- END DATE -->
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date"
+          value="{{ climate_work['end_date'].strftime('%Y-%m-%d') }}"
+         required>
 
         <!-- DESCRIPTION-->
         <label for="description">Description</label>

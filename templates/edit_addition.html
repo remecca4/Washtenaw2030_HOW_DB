@@ -22,7 +22,7 @@
         <!-- DATE -->
         <label for="addition_date">Addition Date:</label>
         <input type="date" id="addition_date" name="addition_date" 
-               value="{{ addition['addition_date'] }}">
+               value="{{ addition['addition_date'].strftime('%Y-%m-%d') }}">
 
 
         <div class="button-group">
