@@ -59,8 +59,9 @@ def parse_insert_congregation_csv(csv_file):
                     website = website_raw[website_raw.find('http'):]
                 else:
                     website = row.get('Website').strip()
-
-            db.insert_congregation(name, address, municipal_entity, denomination, size, website)
+            wash2030_status = row.get('Wash2030_Member_Status', '').strip() or None
+            sf_status = row.get('SF_Member_Status', '').strip() or None
+            db.insert_congregation(name, address, municipal_entity, denomination, size, website, wash2030_status, sf_status)
           except Exception as e:
             print(f"Skipping row {row}: {e}")
             continue
@@ -214,5 +215,41 @@ def parse_insert_climate_work_csv(csv_file):
             print(f"Skipping row {row}: {e}")
             continue
 
+def make_congregation_csv(csv_file):
+    '''
+    Summary
+    -------------------------------------------
+    Adds all rows in `csv_file` to the congregations table
+
+    Parameters
+    --------------------------------------------
+    :param csv_file: string, path to a csv file
+    '''
+    congregations = db.get_all_congregations()
+    
+      name = row.get('Congregation', '').strip()
+                      address = row.get('Address', '').strip() or None
+                      municipal_entity = row.get('Municipal Entity', '').strip() or None
+                      denomination = row.get('Denomination', '').strip() or None
+          
+                      size_raw = row.get('Size', '').strip()
+                      size = int(size_raw) if size_raw.isdigit() else None
+          
+          
+                      website_raw = row.get('Website', '').strip().lower()
+          
+                      if not website_raw or 'no website' in website_raw:
+                          website = None
+                      else:
+                          if '(' in website_raw and 'http' in website_raw:
+                              website = website_raw[website_raw.find('http'):]
+                          else:
+                              website = row.get('Website').strip()
+                      wash2030_status = row.get('Wash2030_Member_Status', '').strip() or None
+                      sf_status = row.get('SF_Member_Status', '').strip() or None
+                      db.insert_congregation(name, address, municipal_entity, denomination, size, website, wash2030_status, sf_status)
+                    except Exception as e:
+                      print(f"Skipping row {row}: {e}")
+                      continue
 if __name__ == "__main__":
     db.close()

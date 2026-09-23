@@ -152,7 +152,7 @@ class DatabaseManager:
         try:
             cursor.execute("""
             INSERT INTO congregations (name, address,municipal_entity, denomination, size,website, wash2030_member_status, sf_member_status)
-            VALUES (%s, %s, %s,%s, %s, %s, %s);
+            VALUES (%s, %s, %s,%s, %s, %s, %s, %s);
         """, (name, address,municipal_entity, denomination, size, website, wash2030_member_status, sf_member_status))
             conn.commit()
         except psycopg2.Error as e:
