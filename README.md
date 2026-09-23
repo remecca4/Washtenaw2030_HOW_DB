@@ -335,26 +335,43 @@ Administrators can:
 
 ## Example Usage
 
-### Viewing and Editing Congregation Data
-
-Users can browse congregation records, open a detailed view, and edit existing information.
+### Viewing Congregation Data
 
 <p align="center">
   <img
-    src="docs/edit_cong_tut.gif"
-    alt="Demonstration of viewing and editing congregation data"
+    src="docs/view_cong.gif"
+    alt="Demonstration of viewing congregation data"
     width="850"
   />
 </p>
 
-### Adding a New Congregation and Contact
-
-Users with the appropriate permissions can add a congregation and its associated contact information.
+### Editing Congregation Data
 
 <p align="center">
   <img
-    src="docs/add_data.gif"
-    alt="Demonstration of adding a new congregation and contact"
+    src="docs/edit_cong.gif"
+    alt="Demonstration of editing congregation data"
+    width="850"
+  />
+</p>
+
+### Adding a New Congregation
+
+
+<p align="center">
+  <img
+    src="docs/add_datap1.gif"
+    alt="Demonstration of adding a new congregation"
+    width="850"
+  />
+</p>
+
+### Adding a New Contact
+
+<p align="center">
+  <img
+    src="docs/add_datap2.gif"
+    alt="Demonstration of adding a new contact"
     width="850"
   />
 </p>
