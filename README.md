@@ -50,8 +50,6 @@ The system includes:
 - [Running the Application](#running-the-application)
 - [Creating the First Admin](#creating-the-first-admin)
 - [Example Usage](#example-usage)
-  - [Viewing and Editing Congregation Data](#viewing-and-editing-congregation-data)
-  - [Adding a New Congregation and Contact](#adding-a-new-congregation-and-contact)
 - [Customizing for Your Own HOW Database](#customizing-for-your-own-how-database)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Author](#author)
