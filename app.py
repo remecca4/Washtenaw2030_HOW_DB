@@ -599,7 +599,7 @@ def delete_congregation(cong_id):
     Redirect Response Object to view congregation page 
     '''
     db.delete_congregation(cong_id)
-    return redirect(f"/congregations?id={cong_id}")
+    return redirect(f"/filter_congs")
 
 @app.route("/edit_contact/<int:contact_id>", methods=["GET", "POST"])
 @login_required
