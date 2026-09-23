@@ -365,7 +365,6 @@ def contacts_form():
     role = request.form.get("role")
     email = request.form.get("email")
     phone_number = request.form.get("phone_number")
-    print("tis the db's prob")
     db.insert_contact(congregation_id, name,role,email,phone_number)
     return redirect(url_for("view_forms"))
 
