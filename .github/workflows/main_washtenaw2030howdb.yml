@@ -63,4 +63,4 @@ jobs:
         with:
           app-name: 'Washtenaw2030HOWDB'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_93126AA9EE504ED48E8936CD035289BE }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8B20570CE1354E26BB4BAFA2519A6048 }}
