@@ -930,7 +930,7 @@ def upload_congregations_csv():
     # Run heavy work outside the request
     threading.Thread(
         target=parse_insert_congregation_csv,
-        args=(path),
+        args=(path,),
         daemon=True
     ).start()
 
