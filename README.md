@@ -318,7 +318,7 @@ http://localhost:5000
 
 ## Creating the First Admin
 
-If no administrator exists in the database, manually insert a user with the role `admin` into the `Users` table.
+If no administrator exists in the database, manually insert an approved user with the role `admin` into the `users` table.
 
 Administrators can:
 
@@ -329,7 +329,62 @@ Administrators can:
 - Manage database records
 
 > [!IMPORTANT]
-> Store only a properly hashed password. Do not insert a plain-text password into the database.
+> Store only a properly hashed password. Do not insert a plain-text password into the database. Use a unique, strong password.
+
+### 1. Connect to PostgreSQL
+
+Connect to PostgreSQL in your terminal using `psql`.
+
+### 2. Generate the password hash
+
+Open a second terminal with the project's virtual environment activated. Run this script to generate a Flask-Bcrypt password hash:
+
+```bash
+python - <<'PY'
+from flask_bcrypt import Bcrypt
+from getpass import getpass
+
+password = getpass("New admin password: ")
+confirmation = getpass("Confirm password: ")
+
+if password != confirmation:
+    raise SystemExit("Passwords do not match.")
+
+bcrypt = Bcrypt()
+print(bcrypt.generate_password_hash(password).decode("utf-8"))
+PY
+```
+
+The password will not display while typing. Copy the generated hash.
+
+
+### 3. Insert the administrator
+
+In your `psql` terminal, replace the email and hash placeholders and run:
+
+```sql
+INSERT INTO users (
+    email,
+    password_hash,
+    role,
+    congregation_id,
+    approved
+)
+VALUES (
+    'your-admin-email@example.com',
+    'PASTE_GENERATED_HASH_HERE',
+    'admin',
+    NULL,
+    TRUE
+)
+RETURNING id, email, role, approved;
+```
+
+
+Exit `psql` with `\q`, then log in to the website using the email and original password—not the hash.
+
+> [!WARNING]
+> Do not commit passwords or generated password hashes to the repository, or print them in application logs.
 
 ## Example Usage
 
