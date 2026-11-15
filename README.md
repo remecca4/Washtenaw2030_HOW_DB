@@ -15,6 +15,7 @@
 [Architecture](#system-architecture) •
 [Installation](#installation) •
 [Usage](#example-usage) •
+[Deployment](#azure-deployment) •
 [Customization](#customizing-for-your-own-how-database) •
 [FAQ](#frequently-asked-questions)
 
@@ -48,6 +49,7 @@ The system includes:
 - [System Architecture](#system-architecture)
 - [Installation](#installation)
 - [Running the Application](#running-the-application)
+- [Azure Deployment](#azure-deployment)
 - [Creating the First Admin](#creating-the-first-admin)
 - [Example Usage](#example-usage)
 - [Customizing for Your Own HOW Database](#customizing-for-your-own-how-database)
@@ -142,9 +144,10 @@ The site includes a secure login system with:
 
 ### Cloud Services
 
-- [Render](https://render.com/) — web application hosting
-- [Aiven](https://aiven.io/) — PostgreSQL database hosting
+- Microsoft Azure App Service — web application hosting
+- Azure Database for PostgreSQL flexible server — PostgreSQL database hosting
 - [Cloudinary](https://cloudinary.com/) — image hosting for case studies
+- GitHub Actions — automated builds and deployment to Azure
 
 ## System Architecture
 ```mermaid
@@ -265,7 +268,7 @@ cd Washtenaw2030_HOW_DB
 
 
 ### 2. Create a Virtual Environment
-
+Use **Python 3.12**
 ```bash
 python -m venv .venv
 ```
@@ -292,7 +295,7 @@ pip install -r requirements.txt
 
 ### 4. Set Environment Variables
 
-Create a `.env` file or configure the following variables in your deployment environment:
+For local development, create a `.env` file and ensure the application loads it. For Azure deployment, configure these values under **App Service → Environment variables → App settings**:
 
 ```dotenv
 SECRET_KEY=your_secret_key
@@ -302,7 +305,34 @@ CLOUDINARY_API_SECRET=your_api_secret
 DATABASE_URL=your_postgresql_connection_string
 ```
 
-## Running the Application
+## Azure Deployment
+
+The application is deployed to **Azure App Service**, with data stored in **Azure Database for PostgreSQL flexible server**. Case-study images are hosted by Cloudinary.
+
+### Deployment Workflow
+
+The GitHub Actions workflow in `.github/workflows/`:
+
+1. Runs when changes are pushed to `main`, or when manually triggered.
+2. Sets up Python 3.12.
+3. Creates a temporary virtual environment and installs `requirements.txt` to check dependency installation.
+4. Uploads the application source as a deployment artifact, excluding the temporary virtual environment.
+5. Deploys the artifact to Azure App Service using `azure/webapps-deploy@v3`.
+
+Azure's Oryx build installs the production dependencies during deployment.
+
+
+### App Service Configuration
+
+Configure the App Service runtime to use **Python 3.12**.
+
+Set the startup command to:
+
+```bash
+gunicorn --bind 0.0.0.0:8000 --access-logfile - --error-logfile - app:app
+```
+
+## Running the Application Locally
 
 Start the Flask server:
 
@@ -438,7 +468,7 @@ To adapt this system for another organization:
 3. Adjust form fields in `templates/forms.html`.
 4. Adjust the congregation view in `templates/congregations.html`.
 5. Update the branding and user interface.
-6. Deploy your instance using Render or another hosting platform.
+6. Deploy your instance using Azure or another hosting platform.
 
 Because the database logic is centralized in `db_manager.py`, most customization can be completed without modifying the main application logic.
 
@@ -448,9 +478,11 @@ Because the database logic is centralized in `db_manager.py`, most customization
 
 Yes. You can add as many administrators as needed.
 
-### Do I have to use Aiven and Render to deploy the application?
+### Do I have to use Azure to deploy the application?
 
-No. You can use any compatible deployment method and PostgreSQL hosting provider.
+No. The current deployment uses Azure App Service and Azure Database for PostgreSQL flexible server, but the application can run on other platforms that support Python, Flask, Gunicorn, and PostgreSQL.
+
+Update the deployment workflow, startup command, environment variables, and database networking for your chosen platform.
 
 ### Can I change data after entering it through the website?
 
